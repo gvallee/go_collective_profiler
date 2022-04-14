@@ -1,4 +1,4 @@
-module github.com/gvallee/go_collective_profiler/tools
+module github.com/gvallee/go_collective_profiler
 
 go 1.13
 
