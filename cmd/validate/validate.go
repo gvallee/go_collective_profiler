@@ -21,13 +21,13 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/gvallee/go_collective_profiler/tools/internal/pkg/backtraces"
-	"github.com/gvallee/go_collective_profiler/tools/internal/pkg/hash"
-	"github.com/gvallee/go_collective_profiler/tools/internal/pkg/location"
-	"github.com/gvallee/go_collective_profiler/tools/internal/pkg/profiler"
-	"github.com/gvallee/go_collective_profiler/tools/internal/pkg/timings"
-	"github.com/gvallee/go_collective_profiler/tools/internal/pkg/webui"
-	"github.com/gvallee/go_collective_profiler/tools/pkg/counts"
+	"github.com/gvallee/go_collective_profiler/internal/pkg/backtraces"
+	"github.com/gvallee/go_collective_profiler/internal/pkg/hash"
+	"github.com/gvallee/go_collective_profiler/internal/pkg/location"
+	"github.com/gvallee/go_collective_profiler/internal/pkg/profiler"
+	"github.com/gvallee/go_collective_profiler/internal/pkg/timings"
+	"github.com/gvallee/go_collective_profiler/internal/pkg/webui"
+	"github.com/gvallee/go_collective_profiler/pkg/counts"
 	"github.com/gvallee/go_util/pkg/util"
 )
 

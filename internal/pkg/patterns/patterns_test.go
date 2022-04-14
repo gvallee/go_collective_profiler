@@ -14,8 +14,8 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/gvallee/go_collective_profiler/tools/internal/pkg/hash"
-	"github.com/gvallee/go_collective_profiler/tools/pkg/counts"
+	"github.com/gvallee/go_collective_profiler/internal/pkg/hash"
+	"github.com/gvallee/go_collective_profiler/pkg/counts"
 )
 
 func compareFiles(t *testing.T, file1 string, file2 string) {

@@ -16,8 +16,8 @@ import (
 	"path/filepath"
 	"runtime"
 
-	"github.com/gvallee/go_collective_profiler/tools/internal/pkg/plugins"
-	"github.com/gvallee/go_collective_profiler/tools/internal/pkg/profiler"
+	"github.com/gvallee/go_collective_profiler/internal/pkg/plugins"
+	"github.com/gvallee/go_collective_profiler/internal/pkg/profiler"
 	"github.com/gvallee/go_util/pkg/util"
 )
 

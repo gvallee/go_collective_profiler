@@ -18,7 +18,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/gvallee/go_collective_profiler/tools/pkg/errors"
+	"github.com/gvallee/go_collective_profiler/pkg/errors"
 )
 
 const (

@@ -13,7 +13,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/gvallee/go_collective_profiler/tools/internal/pkg/format"
+	"github.com/gvallee/go_collective_profiler/internal/pkg/format"
 )
 
 const (

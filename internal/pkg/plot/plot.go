@@ -18,7 +18,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/gvallee/go_collective_profiler/tools/internal/pkg/scale"
+	"github.com/gvallee/go_collective_profiler/internal/pkg/scale"
 	"github.com/gvallee/go_util/pkg/util"
 )
 

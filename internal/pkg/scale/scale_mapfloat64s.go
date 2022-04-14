@@ -10,7 +10,7 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/gvallee/go_collective_profiler/tools/internal/pkg/unit"
+	"github.com/gvallee/go_collective_profiler/internal/pkg/unit"
 )
 
 func mapFloat64sScaleDown(unitType int, unitScale int, values map[int]float64) (int, int, map[int]float64) {

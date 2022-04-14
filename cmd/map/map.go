@@ -16,7 +16,7 @@ import (
 	"path/filepath"
 	"runtime"
 
-	"github.com/gvallee/go_collective_profiler/tools/internal/pkg/maps"
+	"github.com/gvallee/go_collective_profiler/internal/pkg/maps"
 	"github.com/gvallee/go_util/pkg/util"
 )
 

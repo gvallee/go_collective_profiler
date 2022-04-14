@@ -16,9 +16,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/gvallee/go_collective_profiler/tools/internal/pkg/format"
-	"github.com/gvallee/go_collective_profiler/tools/internal/pkg/grouping"
-	"github.com/gvallee/go_collective_profiler/tools/internal/pkg/progress"
+	"github.com/gvallee/go_collective_profiler/internal/pkg/format"
+	"github.com/gvallee/go_collective_profiler/internal/pkg/grouping"
+	"github.com/gvallee/go_collective_profiler/internal/pkg/progress"
 	"github.com/gvallee/go_util/pkg/util"
 )
 
