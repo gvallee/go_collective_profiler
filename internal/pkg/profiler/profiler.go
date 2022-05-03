@@ -1134,11 +1134,9 @@ func (cfg *PostmortemConfig) Analyze() error {
 		if resultsStep4.totalA2AExecutionTimes == nil || len(resultsStep4.totalA2AExecutionTimes) == 0 {
 			return fmt.Errorf("step %d: total execution time from step 4 is empty", currentStep)
 		}
-		/* DEACTIVATED FOR NOW
 		if resultsStep4.totalLateArrivalTimes == nil || len(resultsStep4.totalLateArrivalTimes) == 0 {
 			return fmt.Errorf("step %d: total late time from step 4 is empty", currentStep)
 		}
-		*/
 		if resultsStep4.totalLateArrivalTimes == nil || len(resultsStep4.totalLateArrivalTimes) == 0 {
 			log.Printf("step %d: late arrival timings not available, skipping...", currentStep)
 		}

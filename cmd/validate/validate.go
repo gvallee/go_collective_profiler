@@ -32,11 +32,11 @@ import (
 )
 
 const (
-	sharedLibCounts    = "liballtoallv_counts.so"
-	sharedLibBacktrace = "liballtoallv_backtrace.so"
-	sharedLibLocation  = "liballtoallv_location.so"
-	//sharedLibLateArrival = "liballtoallv_late_arrival.so" DEACTIVATED FOR NOW
-	sharedLibA2ATime = "liballtoallv_exec_timings.so"
+	sharedLibCounts      = "liballtoallv_counts.so"
+	sharedLibBacktrace   = "liballtoallv_backtrace.so"
+	sharedLibLocation    = "liballtoallv_location.so"
+	sharedLibLateArrival = "liballtoallv_late_arrival.so"
+	sharedLibA2ATime     = "liballtoallv_exec_timings.so"
 
 	exampleFileC          = "alltoallv.c"
 	exampleFileDatatypeC  = "alltoallv_dt.c"
@@ -91,12 +91,12 @@ type Test struct {
 	expectedSendCompactCountsFiles []string
 	expectedRecvCompactCountsFiles []string
 	//expectedCountsFiles            []string
-	expectedLocationFiles []string
-	expectedExecTimeFiles []string
-	//expectedLateArrivalFiles []string DEACTIVATED FOR NOW
-	expectedBacktraceFiles []string
-	profilerStepsToExecute string
-	listGraphsToGenerate   []string
+	expectedLocationFiles    []string
+	expectedExecTimeFiles    []string
+	expectedLateArrivalFiles []string
+	expectedBacktraceFiles   []string
+	profilerStepsToExecute   string
+	listGraphsToGenerate     []string
 
 	// Expected output from the postmortem analysis
 	checkContentHeatMap      bool
@@ -225,7 +225,6 @@ func checkOutput(codeBaseDir string, tempDir string, tt *Test) error {
 		index++
 	}
 
-	/* DEACTIVATED FOR NOW
 	fmt.Printf("Checking if %s exist(s)...\n", tt.expectedLateArrivalFiles)
 	index = 0
 	for _, file := range tt.expectedLateArrivalFiles {
@@ -240,7 +239,6 @@ func checkOutput(codeBaseDir string, tempDir string, tt *Test) error {
 		}
 		index++
 	}
-	*/
 
 	fmt.Printf("Checking if %s exist(s)...\n", tt.expectedBacktraceFiles)
 	index = 0
@@ -715,10 +713,10 @@ func main() {
 			expectedSendCompactCountsFiles: []string{"send-counters.job0.rank0.txt"},
 			expectedRecvCompactCountsFiles: []string{"recv-counters.job0.rank0.txt"},
 			// todo: expectedCountsFiles
-			expectedLocationFiles: []string{"alltoall_locations_comm0_rank0.md"},
-			expectedExecTimeFiles: []string{"alltoall_execution_times.rank0_comm0_job0.md"},
-			//expectedLateArrivalFiles: []string{"alltoall_late_arrival_times.rank0_comm0_job0.md"}, DEACTIVATED FOR NOW
-			expectedBacktraceFiles: []string{"alltoall_backtrace_rank0_trace0.md"}, // TODO What about an entry for "alltoall_comm_data_rank0.md", "counts.rank0_call0.md" and "counts.rank0_call0.md"???
+			expectedLocationFiles:    []string{"alltoall_locations_comm0_rank0.md"},
+			expectedExecTimeFiles:    []string{"alltoall_execution_times.rank0_comm0_job0.md"},
+			expectedLateArrivalFiles: []string{"alltoall_late_arrival_times.rank0_comm0_job0.md"},
+			expectedBacktraceFiles:   []string{"alltoall_backtrace_rank0_trace0.md"}, // TODO What about an entry for "alltoall_comm_data_rank0.md", "counts.rank0_call0.md" and "counts.rank0_call0.md"???
 			//profilerStepsToExecute:         profiler.AllSteps,	//??? What is this
 		},
 		{
