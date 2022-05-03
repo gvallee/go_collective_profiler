@@ -86,42 +86,42 @@ func getMax(max int, values map[int]bool, rank int, sendHeatMap map[int]int, rec
 }
 
 type plotData struct {
-	outputDir            string
-	hostMap              map[string][]int
-	values               map[int]bool
-	sendRankBW           map[int]float64
-	recvRankBW           map[int]float64
-	scaledSendRankBW     map[int]float64
-	scaledRecvRankBW     map[int]float64
-	avgSendScaledHeatMap map[int]int
-	avgRecvScaledHeatMap map[int]int
-	avgExecScaledTimeMap map[int]float64
-	//avgLateArrivalScaledTimeMap map[int]float64 DEACTIVATED FOR NOW
-	sendScaledHeatMap map[int]int
-	recvScaledHeatMap map[int]int
-	execScaledTimeMap map[int]float64
-	//lateArrivalScaledTimeMap    map[int]float64 DEACTIVATED FOR NOW
-	emptyLines     int
-	avgSendHeatMap map[int]int
-	avgRecvHeatMap map[int]int
-	avgExecTimeMap map[int]float64
-	//avgLateArrivalTimeMap       map[int]float64 DEACTIVATED FOR NOW
-	sendHeatMap map[int]int
-	recvHeatMap map[int]int
-	execTimeMap map[int]float64
-	// lateArrivalTimeMap          map[int]float64 DEACTIVATED FOR NOW
-	maxValue           int
-	sBWUnit            string
-	rBWUnit            string
-	avgSendHeatMapUnit string
-	avgRecvHeatMapUnit string
-	avgExecTimeMapUnit string
-	// avgLateArrivalTimeMapUnit   string DEACTIVATED FOR NOW
-	sendHeatMapUnit string
-	recvHeatMapUnit string
-	execTimeMapUnit string
-	// lateArrivalTimeMapUnit      string DEACTIVATED FOR NOW
-	numRanks int
+	outputDir                   string
+	hostMap                     map[string][]int
+	values                      map[int]bool
+	sendRankBW                  map[int]float64
+	recvRankBW                  map[int]float64
+	scaledSendRankBW            map[int]float64
+	scaledRecvRankBW            map[int]float64
+	avgSendScaledHeatMap        map[int]int
+	avgRecvScaledHeatMap        map[int]int
+	avgExecScaledTimeMap        map[int]float64
+	avgLateArrivalScaledTimeMap map[int]float64
+	sendScaledHeatMap           map[int]int
+	recvScaledHeatMap           map[int]int
+	execScaledTimeMap           map[int]float64
+	lateArrivalScaledTimeMap    map[int]float64
+	emptyLines                  int
+	avgSendHeatMap              map[int]int
+	avgRecvHeatMap              map[int]int
+	avgExecTimeMap              map[int]float64
+	avgLateArrivalTimeMap       map[int]float64
+	sendHeatMap                 map[int]int
+	recvHeatMap                 map[int]int
+	execTimeMap                 map[int]float64
+	lateArrivalTimeMap          map[int]float64
+	maxValue                    int
+	sBWUnit                     string
+	rBWUnit                     string
+	avgSendHeatMapUnit          string
+	avgRecvHeatMapUnit          string
+	avgExecTimeMapUnit          string
+	avgLateArrivalTimeMapUnit   string
+	sendHeatMapUnit             string
+	recvHeatMapUnit             string
+	execTimeMapUnit             string
+	lateArrivalTimeMapUnit      string
+	numRanks                    int
 }
 
 func (d *plotData) generateRanksMap(idx int, hostname string) (int, int, error) {
@@ -359,11 +359,9 @@ func generateAvgsDataFiles(dir string, outputDir string, hostMap map[string][]in
 	if avgExecTimeMap == nil {
 		return "", fmt.Errorf("avgExecTimeMap is undefined")
 	}
-	/* DEACTIVATED FOR NOW
 	if avgLateArrivalTimeMap == nil {
 		return "", fmt.Errorf("avgLateArrivalTimeMap is undefined")
 	}
-	*/
 
 	if len(avgSendHeatMap) == 0 {
 		return "", fmt.Errorf("avgSendHeatMap is empty")
@@ -374,27 +372,25 @@ func generateAvgsDataFiles(dir string, outputDir string, hostMap map[string][]in
 	if len(avgExecTimeMap) == 0 {
 		return "", fmt.Errorf("avgExecTimeMap is empty")
 	}
-	/* DEACTIVATED FOR NOW
 	if len(avgLateArrivalTimeMap) == 0 {
 		return "", fmt.Errorf("avgLateArrivalTimeMap is empty")
 	}
-	*/
 
 	hosts := sortHostMapKeys(hostMap)
 	data := plotData{
-		outputDir:      outputDir,
-		hostMap:        hostMap,
-		avgSendHeatMap: avgSendHeatMap,
-		avgRecvHeatMap: avgRecvHeatMap,
-		avgExecTimeMap: avgExecTimeMap,
-		//avgLateArrivalTimeMap: avgLateArrivalTimeMap, DEACTIVATED FOR NOW
-		maxValue:         1000, // We automatically scale the data, the max is always 1000
-		values:           make(map[int]bool),
-		sendRankBW:       make(map[int]float64),
-		recvRankBW:       make(map[int]float64),
-		scaledSendRankBW: make(map[int]float64),
-		scaledRecvRankBW: make(map[int]float64),
-		emptyLines:       0,
+		outputDir:             outputDir,
+		hostMap:               hostMap,
+		avgSendHeatMap:        avgSendHeatMap,
+		avgRecvHeatMap:        avgRecvHeatMap,
+		avgExecTimeMap:        avgExecTimeMap,
+		avgLateArrivalTimeMap: avgLateArrivalTimeMap,
+		maxValue:              1000, // We automatically scale the data, the max is always 1000
+		values:                make(map[int]bool),
+		sendRankBW:            make(map[int]float64),
+		recvRankBW:            make(map[int]float64),
+		scaledSendRankBW:      make(map[int]float64),
+		scaledRecvRankBW:      make(map[int]float64),
+		emptyLines:            0,
 	}
 
 	var err error
@@ -410,12 +406,10 @@ func generateAvgsDataFiles(dir string, outputDir string, hostMap map[string][]in
 	if err != nil {
 		return "", fmt.Errorf("scale.MapFloat64s() on avgExecTimeMap failed(): %s", err)
 	}
-	/* DEACTIVATED FOR NOW
 	data.avgLateArrivalTimeMapUnit, data.avgLateArrivalScaledTimeMap, err = scale.MapFloat64s("seconds", avgLateArrivalTimeMap)
 	if err != nil {
 		return "", fmt.Errorf("scale.MapFloat64s() on avgLateArrivalTimeMap failed(): %s", err)
 	}
-	*/
 
 	// fixme: atm we assume that all BW data is homogeneous so once we figure out a scale, it
 	// is the same scale all the time. It might not be true so we really need to figure out the
@@ -471,27 +465,25 @@ func generateCallDataFiles(dir string, outputDir string, leadRank int, callID in
 	if execTimeMap == nil {
 		return "", "", fmt.Errorf("avgExecTimeMap is undefined")
 	}
-	/* DEACTIVATED FOR NOW
 	if lateArrivalMap == nil {
 		return "", "", fmt.Errorf("avgLateArrivalTimeMap is undefined")
 	}
-	*/
 
 	hosts := sortHostMapKeys(hostMap)
 	data := plotData{
-		outputDir:   outputDir,
-		hostMap:     hostMap,
-		sendHeatMap: sendHeatMap,
-		recvHeatMap: recvHeatMap,
-		execTimeMap: execTimeMap,
-		//lateArrivalTimeMap: lateArrivalMap, DEACTIVATED FOR NOW
-		maxValue:         1000, // We automatically scale the data, the max is always 1000
-		values:           make(map[int]bool),
-		sendRankBW:       make(map[int]float64),
-		recvRankBW:       make(map[int]float64),
-		scaledSendRankBW: make(map[int]float64),
-		scaledRecvRankBW: make(map[int]float64),
-		emptyLines:       0,
+		outputDir:          outputDir,
+		hostMap:            hostMap,
+		sendHeatMap:        sendHeatMap,
+		recvHeatMap:        recvHeatMap,
+		execTimeMap:        execTimeMap,
+		lateArrivalTimeMap: lateArrivalMap,
+		maxValue:           1000, // We automatically scale the data, the max is always 1000
+		values:             make(map[int]bool),
+		sendRankBW:         make(map[int]float64),
+		recvRankBW:         make(map[int]float64),
+		scaledSendRankBW:   make(map[int]float64),
+		scaledRecvRankBW:   make(map[int]float64),
+		emptyLines:         0,
 	}
 
 	var err error
@@ -507,12 +499,10 @@ func generateCallDataFiles(dir string, outputDir string, leadRank int, callID in
 	if err != nil {
 		return "", "", err
 	}
-	/* DEACTIVATED FOR NOW
 	data.lateArrivalTimeMapUnit, data.lateArrivalScaledTimeMap, err = scale.MapFloat64s("seconds", lateArrivalMap)
 	if err != nil {
 		return "", "", err
 	}
-	*/
 
 	data.sBWUnit = ""
 	data.rBWUnit = ""
@@ -698,11 +688,9 @@ func CallData(dir string, outputDir string, leadRank int, callID int, hostMap ma
 	if len(execTimeMap) == 0 {
 		return "", fmt.Errorf("execTimeMap is empty")
 	}
-	/* DEACTIVATED FOR NOW
 	if len(lateArrivalMap) == 0 {
 		return "", fmt.Errorf("lateArrivalMap")
 	}
-	*/
 
 	pngFile, gnuplotScript, err := generateCallDataFiles(dir, outputDir, leadRank, callID, hostMap, sendHeatMap, recvHeatMap, execTimeMap, lateArrivalMap)
 	if err != nil {
