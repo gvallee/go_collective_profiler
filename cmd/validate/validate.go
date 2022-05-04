@@ -692,12 +692,7 @@ func main() {
 
 	defaultListGraphs := fmt.Sprintf("0-%d", profiler.DefaultNumGeneratedGraphs)
 	bigListGraphs := "0-999"
-	/*
-		sharedLibraries := []string{sharedLibCounts, sharedLibBacktrace, sharedLibLocation, sharedLibLateArrival, sharedLibA2ATime,
-			sharedLibAlltoAllUnequalCounts, sharedLibAlltoAllUnequalCountsCompact, sharedLibAlltoAllUnequalBacktrace,
-			sharedLibAlltoAllUnequalLocation, sharedLibAlltoAllUnequalLateArrival, sharedLibAlltoAllUnequalA2ATime}
-	*/
-	sharedLibraries := []string{sharedLibCounts, sharedLibBacktrace, sharedLibLocation, sharedLibA2ATime,
+	sharedLibraries := []string{sharedLibCounts, sharedLibBacktrace, sharedLibLocation, sharedLibLateArrival, sharedLibA2ATime,
 		sharedLibAlltoAllUnequalCounts, sharedLibAlltoAllUnequalCountsCompact, sharedLibAlltoAllUnequalBacktrace,
 		sharedLibAlltoAllUnequalLocation, sharedLibAlltoAllUnequalLateArrival, sharedLibAlltoAllUnequalA2ATime}
 	validationTests := []Test{
@@ -717,7 +712,7 @@ func main() {
 			expectedExecTimeFiles:    []string{"alltoall_execution_times.rank0_comm0_job0.md"},
 			expectedLateArrivalFiles: []string{"alltoall_late_arrival_times.rank0_comm0_job0.md"},
 			expectedBacktraceFiles:   []string{"alltoall_backtrace_rank0_trace0.md"}, // TODO What about an entry for "alltoall_comm_data_rank0.md", "counts.rank0_call0.md" and "counts.rank0_call0.md"???
-			//profilerStepsToExecute:         profiler.AllSteps,	//??? What is this
+			//profilerStepsToExecute:         profiler.AllSteps
 		},
 		{
 			collective:                     "alltoall",
@@ -735,7 +730,7 @@ func main() {
 			expectedExecTimeFiles: []string{"alltoall_execution_times.rank0_comm0_job0.md"},
 			//expectedLateArrivalFiles: []string{"alltoall_late_arrival_times.rank0_comm0_job0.md"},
 			expectedBacktraceFiles: []string{"alltoall_backtrace_rank0_trace0.md"}, // TODO What about an entry for "alltoall_comm_data_rank0.md", "counts.rank0_call0.md" and "counts.rank0_call0.md"???
-			//profilerStepsToExecute:         profiler.AllSteps,	//??? What is this
+			//profilerStepsToExecute:         profiler.AllSteps,
 		},
 		/* This test does not pass validation yet
 		{
@@ -785,9 +780,9 @@ func main() {
 			expectedSendCompactCountsFiles: []string{"send-counters.job0.rank0.txt"},
 			expectedRecvCompactCountsFiles: []string{"recv-counters.job0.rank0.txt"},
 			// todo: expectedCountsFiles
-			expectedLocationFiles: []string{"alltoallv_locations_comm0_rank0.md"},
-			expectedExecTimeFiles: []string{"alltoallv_execution_times.rank0_comm0_job0.md"},
-			//expectedLateArrivalFiles: []string{"alltoallv_late_arrival_times.rank0_comm0_job0.md"},
+			expectedLocationFiles:    []string{"alltoallv_locations_comm0_rank0.md"},
+			expectedExecTimeFiles:    []string{"alltoallv_execution_times.rank0_comm0_job0.md"},
+			expectedLateArrivalFiles: []string{"alltoallv_late_arrival_times.rank0_comm0_job0.md"},
 			expectedBacktraceFiles:   []string{"alltoallv_backtrace_rank0_trace0.md"},
 			profilerStepsToExecute:   profiler.AllSteps,
 			checkContentHeatMap:      true,
@@ -808,9 +803,9 @@ func main() {
 			expectedSendCompactCountsFiles: []string{"send-counters.job0.rank0.txt"},
 			expectedRecvCompactCountsFiles: []string{"recv-counters.job0.rank0.txt"},
 			// todo: expectedCountsFiles
-			expectedLocationFiles: []string{"alltoallv_locations_comm0_rank0.md"},
-			expectedExecTimeFiles: []string{"alltoallv_execution_times.rank0_comm0_job0.md"},
-			//expectedLateArrivalFiles: []string{"alltoallv_late_arrival_times.rank0_comm0_job0.md"},
+			expectedLocationFiles:    []string{"alltoallv_locations_comm0_rank0.md"},
+			expectedExecTimeFiles:    []string{"alltoallv_execution_times.rank0_comm0_job0.md"},
+			expectedLateArrivalFiles: []string{"alltoallv_late_arrival_times.rank0_comm0_job0.md"},
 			expectedBacktraceFiles:   []string{"alltoallv_backtrace_rank0_trace0.md"},
 			profilerStepsToExecute:   profiler.AllSteps,
 			checkContentHeatMap:      true,
@@ -831,9 +826,9 @@ func main() {
 			expectedSendCompactCountsFiles: []string{"send-counters.job0.rank0.txt", "send-counters.job0.rank2.txt"},
 			expectedRecvCompactCountsFiles: []string{"recv-counters.job0.rank0.txt", "recv-counters.job0.rank2.txt"},
 			// todo: expectedCountsFiles
-			expectedLocationFiles: []string{"alltoallv_locations_comm0_rank0.md", "alltoallv_locations_comm1_rank0.md", "alltoallv_locations_comm0_rank2.md"},
-			expectedExecTimeFiles: []string{"alltoallv_execution_times.rank0_comm0_job0.md", "alltoallv_execution_times.rank0_comm1_job0.md"},
-			//expectedLateArrivalFiles: []string{"alltoallv_late_arrival_times.rank0_comm0_job0.md", "alltoallv_late_arrival_times.rank0_comm1_job0.md"},
+			expectedLocationFiles:    []string{"alltoallv_locations_comm0_rank0.md", "alltoallv_locations_comm1_rank0.md", "alltoallv_locations_comm0_rank2.md"},
+			expectedExecTimeFiles:    []string{"alltoallv_execution_times.rank0_comm0_job0.md", "alltoallv_execution_times.rank0_comm1_job0.md"},
+			expectedLateArrivalFiles: []string{"alltoallv_late_arrival_times.rank0_comm0_job0.md", "alltoallv_late_arrival_times.rank0_comm1_job0.md"},
 			expectedBacktraceFiles:   []string{"alltoallv_backtrace_rank0_trace0.md", "alltoallv_backtrace_rank0_trace1.md", "alltoallv_backtrace_rank0_trace2.md", "alltoallv_backtrace_rank2_trace0.md", "alltoallv_backtrace_rank2_trace1.md"},
 			profilerStepsToExecute:   profiler.AllSteps,
 			checkContentHeatMap:      true,
@@ -854,9 +849,9 @@ func main() {
 			expectedSendCompactCountsFiles: []string{"send-counters.job0.rank0.txt"},
 			expectedRecvCompactCountsFiles: []string{"recv-counters.job0.rank0.txt"},
 			// todo: expectedCountsFiles
-			expectedLocationFiles: []string{"alltoallv_locations_comm0_rank0.md"},
-			expectedExecTimeFiles: []string{"alltoallv_execution_times.rank0_comm0_job0.md"},
-			//expectedLateArrivalFiles: []string{"alltoallv_late_arrival_times.rank0_comm0_job0.md"},
+			expectedLocationFiles:    []string{"alltoallv_locations_comm0_rank0.md"},
+			expectedExecTimeFiles:    []string{"alltoallv_execution_times.rank0_comm0_job0.md"},
+			expectedLateArrivalFiles: []string{"alltoallv_late_arrival_times.rank0_comm0_job0.md"},
 			expectedBacktraceFiles:   []string{"alltoallv_backtrace_rank0_trace0.md", "alltoallv_backtrace_rank0_trace1.md"},
 			profilerStepsToExecute:   profiler.AllSteps,
 			checkContentHeatMap:      true,
@@ -881,9 +876,9 @@ func main() {
 				expectedSendCompactCountsFiles: []string{"send-counters.job0.rank0.txt"},
 				expectedRecvCompactCountsFiles: []string{"recv-counters.job0.rank0.txt"},
 				// todo: expectedCountsFiles
-				expectedLocationFiles: []string{"alltoallv_locations_comm0_rank0.md"},
-				expectedExecTimeFiles: []string{"alltoallv_execution_times.rank0_comm0_job0.md"},
-				//expectedLateArrivalFiles: []string{"alltoallv_late_arrival_times.rank0_comm0_job0.md"},
+				expectedLocationFiles:    []string{"alltoallv_locations_comm0_rank0.md"},
+				expectedExecTimeFiles:    []string{"alltoallv_execution_times.rank0_comm0_job0.md"},
+				expectedLateArrivalFiles: []string{"alltoallv_late_arrival_times.rank0_comm0_job0.md"},
 				expectedBacktraceFiles:   []string{"alltoallv_backtrace_rank0_trace0.md"},
 				profilerStepsToExecute:   profiler.DefaultSteps,
 				checkContentHeatMap:      false, // heat maps for that test are too big to be in the repo
