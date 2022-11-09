@@ -613,9 +613,7 @@ func DetectFileFormat(path string) (int, error) {
 		return FormatUnknown, err
 	}
 
-	fmt.Printf("DBG - %s\n", line)
 	if strings.HasPrefix(line, "Send datatype size: ") {
-		fmt.Println("DBG - FormatPerCall")
 		return FormatPerCall, nil
 	}
 
@@ -648,7 +646,6 @@ func ParseCountFile(filePath string) (*RawCountsCallsT, error) {
 		}
 		countData.LeadRank = leadRank
 	} else {
-		fmt.Printf("DBG - calling ParsePerCallFileCount()\n")
 		countData, err = ParsePerCallFileCount(filePath)
 		if err != nil {
 			return nil, err
