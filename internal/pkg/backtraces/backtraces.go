@@ -48,7 +48,7 @@ func ReadBacktraceFile(codeBaseDir string, path string, m map[int]string) (map[i
 	}
 	formatMatch, err := format.CheckDataFormatLineFromProfileFile(line, codeBaseDir)
 	if err != nil {
-		return nil, fmt.Errorf("unable to parse format version: %s", err)
+		return nil, fmt.Errorf("CheckDataFormatLineFromProfileFile() failed: %w", err)
 	}
 	if !formatMatch {
 		return nil, fmt.Errorf("data format does not match")

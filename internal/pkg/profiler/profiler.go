@@ -63,6 +63,7 @@ const (
 // PostmortemConfig represents the configuration for a postmortem analysis of a dataset
 type PostmortemConfig struct {
 	CodeBaseDir    string
+	ProfilerSrcDir string
 	CollectiveName string
 	DatasetDir     string
 	BinThresholds  string
@@ -1109,9 +1110,9 @@ func (cfg *PostmortemConfig) Analyze() error {
 		}
 		t := timer.Start()
 		resultsStep4 = new(step4ResultsT)
-		resultsStep4.collectiveOpsTimings, resultsStep4.totalA2AExecutionTimes, resultsStep4.totalLateArrivalTimes, err = timings.HandleTimingFiles(cfg.CodeBaseDir, cfg.DatasetDir, resultsStep1.TotalNumCalls)
+		resultsStep4.collectiveOpsTimings, resultsStep4.totalA2AExecutionTimes, resultsStep4.totalLateArrivalTimes, err = timings.HandleTimingFiles(cfg.ProfilerSrcDir, cfg.DatasetDir, resultsStep1.TotalNumCalls)
 		if err != nil {
-			return fmt.Errorf("unable to parse timing data: %s", err)
+			return fmt.Errorf("timings.HandleTimingFiles() failed, unable to parse timing data: %s", err)
 		}
 		duration := t.Stop()
 		fmt.Printf("Step completed in %s\n", duration)

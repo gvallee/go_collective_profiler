@@ -193,7 +193,7 @@ func ParseLocationFile(codeBaseDir string, path string) (map[int][]*RankLocation
 	// First line must be the data format
 	formatMatch, err := format.CheckDataFormatLineFromProfileFile(lines[readIndex], codeBaseDir)
 	if err != nil {
-		return nil, nil, fmt.Errorf("unable to parse format version: %s", err)
+		return nil, nil, fmt.Errorf("CheckDataFormatLineFromProfileFile() failed in ParseLocationFile(): %w", err)
 	}
 	if !formatMatch {
 		return nil, nil, fmt.Errorf("data format does not match")

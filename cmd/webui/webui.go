@@ -14,6 +14,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"runtime"
 
 	"github.com/gvallee/go_collective_profiler/internal/pkg/webui"
 	"github.com/gvallee/go_util/pkg/util"
@@ -21,6 +22,7 @@ import (
 
 func main() {
 	verbose := flag.Bool("v", false, "Enable verbose mode")
+	profilerSrcDirFlag := flag.String("profiler-src", "", "Set the path to the profiler source code")
 	datasetDir := flag.String("dataset", "", "Base directory of the dataset")
 	name := flag.String("name", "example", "Name of the dataset to display")
 	help := flag.Bool("h", false, "Help message")
@@ -35,8 +37,13 @@ func main() {
 		flag.PrintDefaults()
 		os.Exit(0)
 	}
+	_, filename, _, _ := runtime.Caller(0)
+	profilerSrcDir := filepath.Join(filepath.Dir(filename), "..", "..", "..")
+	if *profilerSrcDirFlag != "" {
+		profilerSrcDir = *profilerSrcDirFlag
+	}
 
-	logFile := util.OpenLogFile("alltoallv", cmdName)
+	logFile := util.OpenLogFile("collective_profiler", cmdName)
 	defer logFile.Close()
 	if *verbose {
 		nultiWriters := io.MultiWriter(os.Stdout, logFile)
@@ -56,6 +63,7 @@ func main() {
 	cfg.DatasetDir = *datasetDir
 	cfg.Name = *name
 	cfg.Port = *port
+	cfg.ProfilerSrcDir = profilerSrcDir
 
 	err := cfg.Start()
 	if err != nil {
