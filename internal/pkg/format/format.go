@@ -69,9 +69,13 @@ func ConvertIntMapToOrderedArrayByValue(m map[int]int) KVList {
 
 // GetDataFormatVersion returns the version of the data format of the repostiory
 func GetDataFormatVersion(codeBaseDir string) (int, error) {
-	content, err := ioutil.ReadFile(filepath.Join(codeBaseDir, DataFormatVersionFilename))
+	if codeBaseDir == "" {
+		return -1, fmt.Errorf("codeBaseDir is undefined")
+	}
+	filePath := filepath.Join(codeBaseDir, DataFormatVersionFilename)
+	content, err := ioutil.ReadFile(filePath)
 	if err != nil {
-		return -1, err
+		return -1, fmt.Errorf("unable to open version file %s: %w", filePath, err)
 	}
 	str := string(content)
 	str = strings.TrimRight(str, "\n")
