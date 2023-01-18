@@ -32,6 +32,17 @@ import (
 )
 
 const (
+	expectedIndexPageFile = "common_expected_index.html"
+
+	noValidationStep              = 0
+	allValidationSteps            = 1
+	traceGenerationStep           = 2
+	postmortemSRCountAnalyzerStep = 3
+	postmortemProfilerStep        = 4
+	webuiStep                     = 5
+
+	/* ALLTOALLV */
+
 	sharedAlltoallvLibCounts      = "liballtoallv_counts.so"
 	sharedAlltoallvLibBacktrace   = "liballtoallv_backtrace.so"
 	sharedAlltoallvLibLocation    = "liballtoallv_location.so"
@@ -50,6 +61,8 @@ const (
 	exampleAlltoallvBinaryBigCountsC = "alltoallv_bigcounts_c"
 	exampleAlltoallvBinaryDatatypeC  = "alltoallv_dt_c"
 
+	/* ALLTOALL */
+
 	sharedLibAlltoAllUnequalCounts        = "liballtoall_counts_unequal.so"
 	sharedLibAlltoAllUnequalCountsCompact = "liballtoall_counts_unequal_compact.so" // an extra one compared to alltoallv ones above
 	sharedLibAlltoAllUnequalBacktrace     = "liballtoall_backtrace_counts_unequal.so"
@@ -67,14 +80,16 @@ const (
 	exampleBinaryAlltoallMulticommC = "alltoall_multicomms_c"
 	exampleBinaryAlltoallDatatypeC  = "alltoall_dt_c"
 
-	expectedIndexPageFile = "common_expected_index.html"
+	/* ALLGATHERV */
+	sharedAllgathervLibCounts      = "liballgatherv_counts.so"
+	sharedAllgathervLibBacktrace   = "liballgatherv_backtrace.so"
+	sharedAllgathervLibLocation    = "liballgatherv_location.so"
+	sharedAllgathervLibLateArrival = "liballgatherv_late_arrival.so"
+	sharedAllgathervLibExecTime    = "liballgatherv_exec_timings.so"
 
-	noValidationStep              = 0
-	allValidationSteps            = 1
-	traceGenerationStep           = 2
-	postmortemSRCountAnalyzerStep = 3
-	postmortemProfilerStep        = 4
-	webuiStep                     = 5
+	exampleAllgathervFileC = "allgatherv.c"
+
+	exampleAllgathervBinaryC = "allgatherv_c"
 )
 
 // Test gathers all the information required to run a specific test
@@ -715,8 +730,25 @@ func main() {
 	bigListGraphs := "0-999"
 	sharedLibraries := []string{sharedAlltoallvLibCounts, sharedAlltoallvLibBacktrace, sharedAlltoallvLibLocation, sharedAlltoallvLibLateArrival, sharedAlltoallvLibExecTime,
 		sharedLibAlltoAllUnequalCounts, sharedLibAlltoAllUnequalCountsCompact, sharedLibAlltoAllUnequalBacktrace,
-		sharedLibAlltoAllUnequalLocation, sharedLibAlltoAllUnequalLateArrival, sharedLibAlltoAllUnequalA2ATime}
+		sharedLibAlltoAllUnequalLocation, sharedLibAlltoAllUnequalLateArrival, sharedLibAlltoAllUnequalA2ATime,
+		sharedAllgathervLibCounts, sharedAllgathervLibBacktrace, sharedAllgathervLibLocation, sharedAllgathervLibLateArrival, sharedAllgathervLibExecTime}
 	validationTests := []Test{
+		{
+			collective:                     "allgatherv",
+			requestedValidationStepsToRun:  []int{traceGenerationStep},
+			np:                             4,
+			totalNumCalls:                  2,
+			numCallsPerComm:                []int{2},
+			numRanksPerComm:                []int{4},
+			source:                         exampleAllgathervFileC,
+			binary:                         exampleAllgathervBinaryC,
+			expectedSendCompactCountsFiles: []string{"send-counters.job0.rank0.txt"},
+			expectedRecvCompactCountsFiles: []string{"recv-counters.job0.rank0.txt"},
+			expectedLocationFiles:          []string{"allgatherv_locations_comm0_rank0.md"},
+			expectedExecTimeFiles:          []string{"allgatherv_execution_times.rank0_comm0_job0.md"},
+			expectedLateArrivalFiles:       []string{"allgatherv_late_arrival_times.rank0_comm0_job0.md"},
+			expectedBacktraceFiles:         []string{"allgatherv_backtrace_rank0_trace0.md"},
+		},
 		{
 			collective:                     "alltoall",
 			requestedValidationStepsToRun:  []int{traceGenerationStep},
