@@ -330,6 +330,10 @@ func (v *validationCfg) validateTestSRCountsAnalyzer(testCfg *testCfg) error {
 }
 
 func (v *validationCfg) validateDatasetProfiler(codeBaseDir string, collectiveName string, testCfg *testCfg) error {
+	if codeBaseDir == "" {
+		return fmt.Errorf("codeBaseDir is undefined")
+	}
+
 	// Make sure we point to the correct location for the profiler source code
 	if v.profilerSrcDir != "" {
 		codeBaseDir = v.profilerSrcDir
@@ -987,6 +991,10 @@ func main() {
 	validation.sharedLibraries = sharedLibraries
 	validation.testCfgs = make(map[string]*testCfg)
 	validation.profilerSrcDir = *profilerSrcDirFlag
+	if validation.profilerSrcDir == "" {
+		// It means we are in the context of the collective_profiler where the tools are a sub-module
+		validation.profilerSrcDir = codeBaseDir
+	}
 
 	for idx, tt := range validationTests {
 		cfg := new(testCfg)
