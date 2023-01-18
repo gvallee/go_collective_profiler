@@ -170,7 +170,7 @@ func readMetaData(reader *bufio.Reader, codeBaseDir string, skipCheckMetadata bo
 		}
 		err = format.CheckDataFormat(dataFormatVersion, codeBaseDir)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("CheckDataFormat() failed: %w", err)
 		}
 		md = new(Metadata)
 		md.formatVersion = dataFormatVersion
@@ -194,7 +194,7 @@ func getMetaData(reader *bufio.Reader, codeBaseDir string) (*Metadata, error) {
 
 func skipMetaData(reader *bufio.Reader) error {
 	_, err := readMetaData(reader, "", true)
-	return err
+	return fmt.Errorf("readMetaData() failed: %w", err)
 }
 
 func getCallID(reader *bufio.Reader) (int, error) {
@@ -294,7 +294,7 @@ func ParseTimingFile(filePath string, codeBaseDir string) (*Metadata, map[int]ma
 
 	md, err := getMetaData(r, codeBaseDir)
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, nil, fmt.Errorf("getMetaData() failed: %w", err)
 	}
 	if md == nil {
 		return nil, nil, nil, fmt.Errorf("metadata for %s is missing", filePath)
@@ -374,7 +374,7 @@ func (collectiveInfo *CollectiveTimings) analyzeTimingsFiles(codeBaseDir string,
 			}
 			execTimesMetadata, execTimes, execRankTimeMap, err := ParseTimingFile(execFile, codeBaseDir)
 			if err != nil {
-				return err
+				return fmt.Errorf("ParseTimingFile() failed for execution times: %w", err)
 			}
 			collectiveInfo.execTimesMetadata = execTimesMetadata
 			commIdentifier := CommT{
@@ -398,7 +398,7 @@ func (collectiveInfo *CollectiveTimings) analyzeTimingsFiles(codeBaseDir string,
 			}
 			lateArrivalMetadata, lateTimes, lateArrivalRankTimeMap, err := ParseTimingFile(lateArrivalFile, codeBaseDir)
 			if err != nil {
-				return err
+				return fmt.Errorf("ParseTimingFile() failed for late arrival times: %w", err)
 			}
 			collectiveInfo.lateArrivalMetadata = lateArrivalMetadata
 			commIdentifier := CommT{
@@ -476,7 +476,7 @@ func HandleTimingFiles(codeBaseDir string, dir string, totalNumCalls int) (map[s
 	for collectiveName, collectiveData := range data {
 		err := collectiveData.analyzeTimingsFiles(codeBaseDir, dir, collectiveName, totalExecutionTimes, totalLateArrivalTimes)
 		if err != nil {
-			return nil, nil, nil, err
+			return nil, nil, nil, fmt.Errorf("collectiveData.analyzeTimingsFiles() failed: %w", err)
 		}
 	}
 

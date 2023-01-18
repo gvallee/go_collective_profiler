@@ -87,7 +87,7 @@ func GetDataFormatVersion(codeBaseDir string) (int, error) {
 func CheckDataFormat(version int, codeBaseDir string) error {
 	myVersion, err := GetDataFormatVersion(codeBaseDir)
 	if err != nil {
-		return err
+		return fmt.Errorf("GetDataFormatVersion() failed: %w", err)
 	}
 
 	if myVersion != version {
@@ -112,7 +112,7 @@ func CheckDataFormatLineFromProfileFile(line string, codeBaseDir string) (bool, 
 	}
 	err = CheckDataFormat(dataFormatVersion, codeBaseDir)
 	if err != nil {
-		return false, err
+		return false, fmt.Errorf("CheckDataFormat() failed: %w", err)
 	}
 
 	return true, nil
@@ -122,7 +122,7 @@ func CheckDataFormatLineFromProfileFile(line string, codeBaseDir string) (bool, 
 func WriteDataFormat(codeBaseDir string, fd *os.File) error {
 	formatVersion, err := GetDataFormatVersion(codeBaseDir)
 	if err != nil {
-		return err
+		return fmt.Errorf("GetDataFormatVersion() failed: %w", err)
 	}
 
 	_, err = fd.WriteString(DataFormatHeader + strconv.Itoa(formatVersion) + "\n\n")

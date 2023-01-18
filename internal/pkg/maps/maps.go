@@ -206,7 +206,7 @@ func LoadCallsFileHeatMap(codeBaseDir string, path string) (map[int]map[int]int,
 	}
 	formatMatch, err := format.CheckDataFormatLineFromProfileFile(line, codeBaseDir)
 	if err != nil {
-		return nil, fmt.Errorf("unable to parse format version from %s: %s", path, err)
+		return nil, fmt.Errorf("format.CheckDataFormatLineFromProfileFile() failed from %s: %w", path, err)
 	}
 	if !formatMatch {
 		return nil, fmt.Errorf("data format does not match")
@@ -357,25 +357,25 @@ func commCreate(codeBaseDir string, collectiveName string, dir string, leadRank 
 	var err error
 	rankFileData, _, commMaps.RanksMap, err = prepareRanksMap(codeBaseDir, dir)
 	if err != nil {
-		return nil, commMaps, err
+		return nil, commMaps, fmt.Errorf("prepareRanksMap() failed: %w", err)
 	}
 
 	err = createHeatMap(codeBaseDir, collectiveName, dir, leadRank, rankFileData, allCallsData, &commMaps, globalSendHeatMap, globalRecvHeatMap, rankNumCallsMap)
 	if err != nil {
-		return rankFileData, commMaps, err
+		return rankFileData, commMaps, fmt.Errorf("createHeatMap() failed: %w", err)
 	}
 
 	// Save the heat maps for the entire execution
 	globalSendHeatMapFilePath := filepath.Join(dir, GlobalHeatMapPrefix+"-send.md")
 	err = saveGlobalHeatMap(codeBaseDir, globalSendHeatMap, globalSendHeatMapFilePath)
 	if err != nil {
-		return rankFileData, commMaps, err
+		return rankFileData, commMaps, fmt.Errorf("saveGlobalHeatMap() for send side failed: %w", err)
 	}
 
 	globalRecvHeatMapFilePath := filepath.Join(dir, GlobalHeatMapPrefix+"-recv.md")
 	err = saveGlobalHeatMap(codeBaseDir, globalRecvHeatMap, globalRecvHeatMapFilePath)
 	if err != nil {
-		return rankFileData, commMaps, err
+		return rankFileData, commMaps, fmt.Errorf("saveGlobalHeatMap() for recv side failed: %w", err)
 	}
 
 	return rankFileData, commMaps, nil
@@ -398,7 +398,7 @@ func Create(codeBaseDir string, collectiveName string, id int, dir string, allCa
 		for _, commData := range allCallsData {
 			globalCommRankFileData[commData.LeadRank], globalCallsData[commData.LeadRank], err = commCreate(codeBaseDir, collectiveName, dir, commData.LeadRank, commData.CallData, globalSendHeatMap, globalRecvHeatMap, rankNumCallsMap)
 			if err != nil {
-				return nil, nil, nil, nil, nil, err
+				return nil, nil, nil, nil, nil, fmt.Errorf("commCreate() failed: %w", err)
 			}
 		}
 
@@ -406,13 +406,13 @@ func Create(codeBaseDir string, collectiveName string, id int, dir string, allCa
 		globalSendHeatMapFilePath := filepath.Join(dir, GlobalHeatMapPrefix+"-send.md")
 		err = saveGlobalHeatMap(codeBaseDir, globalSendHeatMap, globalSendHeatMapFilePath)
 		if err != nil {
-			return nil, nil, nil, nil, nil, err
+			return nil, nil, nil, nil, nil, fmt.Errorf("saveGlobalHeatMap() failed: %w", err)
 		}
 
 		globalRecvHeatMapFilePath := filepath.Join(dir, GlobalHeatMapPrefix+"-recv.md")
 		err = saveGlobalHeatMap(codeBaseDir, globalRecvHeatMap, globalRecvHeatMapFilePath)
 		if err != nil {
-			return nil, nil, nil, nil, nil, err
+			return nil, nil, nil, nil, nil, fmt.Errorf("saveGlobalHeatMap() failed: %w", err)
 		}
 
 		return globalCommRankFileData, globalCallsData, globalSendHeatMap, globalRecvHeatMap, rankNumCallsMap, nil
@@ -527,7 +527,7 @@ func prepareRanksMap(codeBaseDir string, dir string) (*location.RankFileData, ma
 	for _, locationFile := range locationFiles {
 		callsData, locationsData, err := location.ParseLocationFile(codeBaseDir, locationFile)
 		if err != nil {
-			return nil, nil, nil, err
+			return nil, nil, nil, fmt.Errorf("location.ParseLocationFile() failed: %w", err)
 		}
 		for callID := range callsData {
 			if _, ok := callsRanksMap[callID]; !ok {
@@ -556,7 +556,7 @@ func prepareRanksMap(codeBaseDir string, dir string) (*location.RankFileData, ma
 
 	err = createRankFile(dir, hm)
 	if err != nil {
-		return hm, nil, nil, err
+		return hm, nil, nil, fmt.Errorf("createRankFile() failed: %w", err)
 	}
 
 	return hm, callMap, callsRanksMap, nil

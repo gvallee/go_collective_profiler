@@ -7,10 +7,8 @@
 package plugins
 
 import (
-	"fmt"
 	"io/ioutil"
 	"log"
-	"os"
 	"path/filepath"
 	"plugin"
 	"strings"
@@ -25,8 +23,7 @@ func Load(basedir string, plugins *Plugins) error {
 	pluginsDir := filepath.Join(basedir, "plugins")
 	sharedLibs, err := ioutil.ReadDir(pluginsDir)
 	if err != nil {
-		fmt.Printf("ERROR: impossible to read %s directory\n", pluginsDir)
-		os.Exit(1)
+		return err
 	}
 	var pluginFiles []string
 	for _, f := range sharedLibs {

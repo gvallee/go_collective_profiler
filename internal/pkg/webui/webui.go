@@ -68,12 +68,13 @@ type server struct {
 
 // Config represents the configuration of a webUI
 type Config struct {
-	wg          *sync.WaitGroup
-	Port        int
-	codeBaseDir string
-	DatasetDir  string
-	Name        string
-	srv         *http.Server
+	wg             *sync.WaitGroup
+	Port           int
+	CodeBaseDir    string
+	ProfilerSrcDir string
+	DatasetDir     string
+	Name           string
+	srv            *http.Server
 
 	// The webUI is designed at the moment to support only alltoallv over a single communicator
 	// so we hardcode corresponding data
@@ -164,7 +165,14 @@ func allDataAvailable(collectiveName string, dir string, leadRank int, commID in
 }
 
 func (c *Config) getTemplateFilePath(name string) string {
-	return filepath.Join(c.codeBaseDir, "tools", "internal", "pkg", "webui", "templates", name+".html")
+	// We can be either in the context of the profiler itself or the tool source code
+	// and each will use a slightly different path
+	toolDir := filepath.Join(c.CodeBaseDir, "tools")
+	path := filepath.Join(c.CodeBaseDir, "tools", "internal", "pkg", "webui", "templates", name+".html")
+	if !util.PathExists(toolDir) {
+		path = filepath.Join(c.CodeBaseDir, "internal", "pkg", "webui", "templates", name+".html")
+	}
+	return path
 }
 
 func (c *Config) serviceCallDetailsRequest(w http.ResponseWriter, r *http.Request) {
@@ -212,7 +220,7 @@ func (c *Config) serviceCallDetailsRequest(w http.ResponseWriter, r *http.Reques
 		if allDataAvailable(c.collectiveName, c.DatasetDir, leadRank, c.commID, jobID, callID) {
 			if c.callsSendHeatMap[leadRank] == nil {
 				sendHeatMapFilename := maps.GetSendCallsHeatMapFilename(c.DatasetDir, c.collectiveName, leadRank)
-				sendHeatMap, err := maps.LoadCallsFileHeatMap(c.codeBaseDir, sendHeatMapFilename)
+				sendHeatMap, err := maps.LoadCallsFileHeatMap(c.CodeBaseDir, sendHeatMapFilename)
 				if err != nil {
 					log.Printf("ERROR: %s", err)
 					http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -223,7 +231,7 @@ func (c *Config) serviceCallDetailsRequest(w http.ResponseWriter, r *http.Reques
 
 			if c.callsRecvHeatMap[leadRank] == nil {
 				recvHeatMapFilename := maps.GetRecvCallsHeatMapFilename(c.DatasetDir, c.collectiveName, leadRank)
-				recvHeatMap, err := maps.LoadCallsFileHeatMap(c.codeBaseDir, recvHeatMapFilename)
+				recvHeatMap, err := maps.LoadCallsFileHeatMap(c.CodeBaseDir, recvHeatMapFilename)
 				if err != nil {
 					log.Printf("ERROR: %s", err)
 					http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -233,18 +241,18 @@ func (c *Config) serviceCallDetailsRequest(w http.ResponseWriter, r *http.Reques
 			}
 
 			execTimingsFile := timings.GetExecTimingFilename(c.collectiveName, leadRank, c.commID, jobID)
-			_, execTimings, _, err := timings.ParseTimingFile(execTimingsFile, c.codeBaseDir)
+			_, execTimings, _, err := timings.ParseTimingFile(execTimingsFile, c.ProfilerSrcDir)
 			if err != nil {
-				log.Printf("unable to parse %s: %s", execTimingsFile, err)
+				log.Printf("timings.ParseTimingFile() failed for execution time data, unable to parse %s: %s", execTimingsFile, err)
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
 			}
 			callExecTimings := execTimings[callID]
 
 			lateArrivalFile := timings.GetLateArrivalTimingFilename(c.collectiveName, leadRank, c.commID, jobID)
-			_, lateArrivalTimings, _, err := timings.ParseTimingFile(lateArrivalFile, c.codeBaseDir)
+			_, lateArrivalTimings, _, err := timings.ParseTimingFile(lateArrivalFile, c.ProfilerSrcDir)
 			if err != nil {
-				log.Printf("unable to parse %s: %s", execTimingsFile, err)
+				log.Printf("timings.ParseTimingFile() failed for late arrival data, unable to parse %s: %s", execTimingsFile, err)
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
 			}
@@ -269,7 +277,7 @@ func (c *Config) serviceCallDetailsRequest(w http.ResponseWriter, r *http.Reques
 			}
 		} else {
 			if c.callMaps == nil {
-				c.rankFileData, c.callMaps, c.globalSendHeatMap, c.globalRecvHeatMap, c.rankNumCallsMap, err = maps.Create(c.codeBaseDir, c.collectiveName, maps.Heat, c.DatasetDir, c.allCallsData)
+				c.rankFileData, c.callMaps, c.globalSendHeatMap, c.globalRecvHeatMap, c.rankNumCallsMap, err = maps.Create(c.ProfilerSrcDir, c.collectiveName, maps.Heat, c.DatasetDir, c.allCallsData)
 				if err != nil {
 					http.Error(w, err.Error(), http.StatusInternalServerError)
 					return
@@ -278,14 +286,15 @@ func (c *Config) serviceCallDetailsRequest(w http.ResponseWriter, r *http.Reques
 
 			if c.operationsTimings == nil {
 				log.Println("Loading timing data...")
-				c.operationsTimings, c.totalExecutionTimes, c.totalLateArrivalTimes, err = timings.HandleTimingFiles(c.codeBaseDir, c.DatasetDir, c.numCalls)
+				c.operationsTimings, c.totalExecutionTimes, c.totalLateArrivalTimes, err = timings.HandleTimingFiles(c.ProfilerSrcDir, c.DatasetDir, c.numCalls)
 				if err != nil {
+					log.Printf("timings.HandleTimingFiles() failed in serviceCallDetailsRequest()\n")
 					http.Error(w, err.Error(), http.StatusInternalServerError)
 					return
 				}
 			}
 
-			comms, err := comm.GetData(c.codeBaseDir, c.DatasetDir)
+			comms, err := comm.GetData(c.ProfilerSrcDir, c.DatasetDir)
 			if err != nil {
 				log.Printf("comm.GetData() failed: %s", err)
 				http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -635,8 +644,13 @@ func Init() *Config {
 	cfg.collectiveName = "alltoallv"
 	cfg.commID = 0
 	_, filename, _, _ := runtime.Caller(0)
-	cfg.codeBaseDir = filepath.Join(filepath.Dir(filename), "..", "..", "..", "..")
-
+	// This may be invoked in the context of the profiler itself or its tools
+	// Depending on the context, the codeBaseDir, i.e., the code base of the
+	// profiler or tools, differs
+	cfg.CodeBaseDir = filepath.Join(filepath.Dir(filename), "..", "..", "..", "..")
+	if !util.FileExists(filepath.Join(cfg.CodeBaseDir, "plugin")) {
+		cfg.CodeBaseDir = filepath.Join(filepath.Dir(filename), "..", "..", "..")
+	}
 	cfg.indexTemplatePath = cfg.getTemplateFilePath("index")
 	cfg.callsTemplatePath = cfg.getTemplateFilePath("callsLayout")
 	cfg.callTemplatePath = cfg.getTemplateFilePath("callDetails")
@@ -644,7 +658,7 @@ func Init() *Config {
 	cfg.patternsTemplatePath = cfg.getTemplateFilePath("patterns")
 	cfg.imbalanceTemplatePath = cfg.getTemplateFilePath("imbalance")
 
-	plugins.Load(cfg.codeBaseDir, &cfg.Plugins)
+	plugins.Load(cfg.CodeBaseDir, &cfg.Plugins)
 
 	return cfg
 }

@@ -32,23 +32,23 @@ import (
 )
 
 const (
-	sharedLibCounts      = "liballtoallv_counts.so"
-	sharedLibBacktrace   = "liballtoallv_backtrace.so"
-	sharedLibLocation    = "liballtoallv_location.so"
-	sharedLibLateArrival = "liballtoallv_late_arrival.so"
-	sharedLibA2ATime     = "liballtoallv_exec_timings.so"
+	sharedAlltoallvLibCounts      = "liballtoallv_counts.so"
+	sharedAlltoallvLibBacktrace   = "liballtoallv_backtrace.so"
+	sharedAlltoallvLibLocation    = "liballtoallv_location.so"
+	sharedAlltoallvLibLateArrival = "liballtoallv_late_arrival.so"
+	sharedAlltoallvLibExecTime    = "liballtoallv_exec_timings.so"
 
-	exampleFileC          = "alltoallv.c"
-	exampleFileDatatypeC  = "alltoallv_dt.c"
-	exampleFileF          = "alltoallv.f90"
-	exampleFileMulticommC = "alltoallv_multicomms.c"
-	exampleFileBigCountsC = "alltoallv_bigcounts.c"
+	exampleAlltoallvFileC          = "alltoallv.c"
+	exampleAlltoallvFileDatatypeC  = "alltoallv_dt.c"
+	exampleAlltoallvFileF          = "alltoallv.f90"
+	exampleAlltoallvFileMulticommC = "alltoallv_multicomms.c"
+	exampleAlltoallvFileBigCountsC = "alltoallv_bigcounts.c"
 
-	exampleBinaryC          = "alltoallv_c"
-	exampleBinaryF          = "alltoallv_f"
-	exampleBinaryMulticommC = "alltoallv_multicomms_c"
-	exampleBinaryBigCountsC = "alltoallv_bigcounts_c"
-	exampleBinaryDatatypeC  = "alltoallv_dt_c"
+	exampleAlltoallvBinaryC          = "alltoallv_c"
+	exampleAlltoallvBinaryF          = "alltoallv_f"
+	exampleAlltoallvBinaryMulticommC = "alltoallv_multicomms_c"
+	exampleAlltoallvBinaryBigCountsC = "alltoallv_bigcounts_c"
+	exampleAlltoallvBinaryDatatypeC  = "alltoallv_dt_c"
 
 	sharedLibAlltoAllUnequalCounts        = "liballtoall_counts_unequal.so"
 	sharedLibAlltoAllUnequalCountsCompact = "liballtoall_counts_unequal_compact.so" // an extra one compared to alltoallv ones above
@@ -111,6 +111,7 @@ type testCfg struct {
 }
 
 type validationCfg struct {
+	profilerSrcDir  string
 	sharedLibraries []string
 	tests           []Test
 	testCfgs        map[string]*testCfg
@@ -274,10 +275,17 @@ func checkOutput(codeBaseDir string, tempDir string, tt *Test) error {
 	return nil
 }
 
-func validateTestSRCountsAnalyzer(testName string, dir string) error {
+func (v *validationCfg) validateTestSRCountsAnalyzer(testCfg *testCfg) error {
+	testName := testCfg.cfg.binary
+	dir := testCfg.tempDir
 	toolName := "srcountsanalyzer"
-	_, filename, _, _ := runtime.Caller(0)
-	basedir := filepath.Join(filepath.Dir(filename), "..", "..", "..")
+	basedir := ""
+	if v.profilerSrcDir == "" {
+		_, filename, _, _ := runtime.Caller(0)
+		basedir = filepath.Join(filepath.Dir(filename), "..", "..", "..")
+	} else {
+		basedir = v.profilerSrcDir
+	}
 
 	toolDir := filepath.Join(basedir, "tools", "cmd", toolName)
 	toolBin := filepath.Join(toolDir, toolName)
@@ -306,10 +314,16 @@ func validateTestSRCountsAnalyzer(testName string, dir string) error {
 	return nil
 }
 
-func validateDatasetProfiler(codeBaseDir string, collectiveName string, testCfg *testCfg) error {
+func (v *validationCfg) validateDatasetProfiler(codeBaseDir string, collectiveName string, testCfg *testCfg) error {
+	// Make sure we point to the correct location for the profiler source code
+	if v.profilerSrcDir != "" {
+		codeBaseDir = v.profilerSrcDir
+	}
+
 	for _, listGraphs := range testCfg.cfg.listGraphsToGenerate {
 		postmortemCfg := profiler.PostmortemConfig{
 			CodeBaseDir:    codeBaseDir,
+			ProfilerSrcDir: v.profilerSrcDir,
 			CollectiveName: collectiveName,
 			Steps:          testCfg.cfg.profilerStepsToExecute,
 			DatasetDir:     testCfg.tempDir,
@@ -367,18 +381,18 @@ func validateDatasetProfiler(codeBaseDir string, collectiveName string, testCfg 
 	return nil
 }
 
-func validateTestPostmortemResults(codeBaseDir string, collectiveName string, testCfg *testCfg) error {
+func (v *validationCfg) validateTestPostmortemResults(codeBaseDir string, collectiveName string, testCfg *testCfg) error {
 	if validationStepIsSet(testCfg.cfg, postmortemSRCountAnalyzerStep) {
-		err := validateTestSRCountsAnalyzer(testCfg.cfg.binary, testCfg.tempDir)
+		err := v.validateTestSRCountsAnalyzer(testCfg)
 		if err != nil {
-			return err
+			return fmt.Errorf("validateTestSRCountsAnalyzer() failed: %w", err)
 		}
 	}
 
 	if validationStepIsSet(testCfg.cfg, postmortemProfilerStep) {
-		err := validateDatasetProfiler(codeBaseDir, collectiveName, testCfg)
+		err := v.validateDatasetProfiler(codeBaseDir, collectiveName, testCfg)
 		if err != nil {
-			return err
+			return fmt.Errorf("validateDatasetProfiler() failed: %w", err)
 		}
 	}
 
@@ -388,7 +402,7 @@ func validateTestPostmortemResults(codeBaseDir string, collectiveName string, te
 func (v *validationCfg) postmortemAnalysisTools(codeBaseDir string, collectiveName string) error {
 	for source, testCfg := range v.testCfgs {
 		if validationStepIsSet(testCfg.cfg, postmortemSRCountAnalyzerStep) || validationStepIsSet(testCfg.cfg, postmortemProfilerStep) {
-			err := validateTestPostmortemResults(codeBaseDir, collectiveName, testCfg)
+			err := v.validateTestPostmortemResults(codeBaseDir, collectiveName, testCfg)
 			if err != nil {
 				fmt.Printf("validation of the postmortem analysis for %s in %s failed: %s\n", source, testCfg.tempDir, err)
 				return err
@@ -413,38 +427,38 @@ func compareResultWithFileContent(filePath string, content string) (bool, error)
 	return true, nil
 }
 
-func checkIndexPageContent(codeBaseDir string, content string) error {
-	expectedFile := filepath.Join(codeBaseDir, "tests", expectedIndexPageFile)
+func (v *validationCfg) checkIndexPageContent(codeBaseDir string, content string) error {
+	expectedFile := filepath.Join(v.profilerSrcDir, "tests", expectedIndexPageFile)
 	success, err := compareResultWithFileContent(expectedFile, content)
 	if err != nil {
 		return fmt.Errorf("unable to check the result: %s", err)
 	}
 	if !success {
-		return fmt.Errorf("unexpected output: %s", content)
+		return fmt.Errorf("unexpected output (expectedFile: %s, output: %s)", expectedFile, content)
 	}
 	return nil
 }
 
-func checkCallPageContent(codeBaseDir string, testCfg *testCfg, content string) error {
-	expectedFile := filepath.Join(codeBaseDir, "tests", testCfg.cfg.binary, "expectedOutput", "call0.html")
+func (v *validationCfg) checkCallPageContent(codeBaseDir string, testCfg *testCfg, content string) error {
+	expectedFile := filepath.Join(v.profilerSrcDir, "tests", testCfg.cfg.binary, "expectedOutput", "call0.html")
 	success, err := compareResultWithFileContent(expectedFile, content)
 	if err != nil {
 		return fmt.Errorf("unable to check the result: %s", err)
 	}
 	if !success {
-		return fmt.Errorf("unexpected output")
+		return fmt.Errorf("unexpected output (expectedFile: %s, output: %s)", expectedFile, content)
 	}
 	return nil
 }
 
-func checkPatternsPageContent(codeBaseDir string, testCfg *testCfg, content string) error {
-	expectedFile := filepath.Join(codeBaseDir, "tests", testCfg.cfg.binary, "expectedOutput", "patterns.html")
+func (v *validationCfg) checkPatternsPageContent(codeBaseDir string, testCfg *testCfg, content string) error {
+	expectedFile := filepath.Join(v.profilerSrcDir, "tests", testCfg.cfg.binary, "expectedOutput", "patterns.html")
 	success, err := compareResultWithFileContent(expectedFile, content)
 	if err != nil {
 		return fmt.Errorf("unable to check the result: %s", err)
 	}
 	if !success {
-		return fmt.Errorf("unexpected output")
+		return fmt.Errorf("unexpected output (expectedFile: %s, output: %s)", expectedFile, content)
 	}
 	return nil
 }
@@ -467,14 +481,14 @@ func loadPage(target string, cfg *webui.Config) (string, error) {
 	return string(body), nil
 }
 
-func validateIndexPage(codeBaseDir string, cfg *webui.Config) error {
+func (v *validationCfg) validateIndexPage(codeBaseDir string, cfg *webui.Config) error {
 	fmt.Printf("Validating index page...\n")
 	bs, err := loadPage("", cfg)
 	if err != nil {
 		return err
 	}
 
-	return checkIndexPageContent(codeBaseDir, bs)
+	return v.checkIndexPageContent(codeBaseDir, bs)
 }
 
 func validateCallsPage(codeBaseDir string, cfg *webui.Config) error {
@@ -489,22 +503,22 @@ func validateCallsPage(codeBaseDir string, cfg *webui.Config) error {
 	return nil
 }
 
-func validateCallPage(codeBaseDir string, cfg *webui.Config, testCfg *testCfg) error {
+func (v *validationCfg) validateCallPage(codeBaseDir string, cfg *webui.Config, testCfg *testCfg) error {
 	fmt.Printf("Validating call page...\n")
 	bs, err := loadPage("call?leadRank=0&callID=0", cfg)
 	if err != nil {
-		return err
+		return fmt.Errorf("laodPage() failed: %w", err)
 	}
-	return checkCallPageContent(codeBaseDir, testCfg, bs)
+	return v.checkCallPageContent(codeBaseDir, testCfg, bs)
 }
 
-func validatePatternsPage(codeBaseDir string, cfg *webui.Config, testCfg *testCfg) error {
+func (v *validationCfg) validatePatternsPage(codeBaseDir string, cfg *webui.Config, testCfg *testCfg) error {
 	fmt.Printf("Validating patterns page...\n")
 	bs, err := loadPage("patterns", cfg)
 	if err != nil {
 		return err
 	}
-	return checkPatternsPageContent(codeBaseDir, testCfg, bs)
+	return v.checkPatternsPageContent(codeBaseDir, testCfg, bs)
 }
 
 func validateImbalancePage(codeBaseDir string, cfg *webui.Config, testCfg *testCfg) error {
@@ -516,8 +530,8 @@ func validateImbalancePage(codeBaseDir string, cfg *webui.Config, testCfg *testC
 	return nil
 }
 
-func validateWebUIPages(codeBaseDir string, cfg *webui.Config, testCfg *testCfg) error {
-	err := validateIndexPage(codeBaseDir, cfg)
+func (v *validationCfg) validateWebUIPages(codeBaseDir string, cfg *webui.Config, testCfg *testCfg) error {
+	err := v.validateIndexPage(codeBaseDir, cfg)
 	if err != nil {
 		return fmt.Errorf("validateIndexPage() failed: %w", err)
 	}
@@ -527,12 +541,12 @@ func validateWebUIPages(codeBaseDir string, cfg *webui.Config, testCfg *testCfg)
 		return fmt.Errorf("validateCallsPage() failed: %w", err)
 	}
 
-	err = validateCallPage(codeBaseDir, cfg, testCfg)
+	err = v.validateCallPage(codeBaseDir, cfg, testCfg)
 	if err != nil {
 		return fmt.Errorf("validateCallPage() failed: %w", err)
 	}
 
-	err = validatePatternsPage(codeBaseDir, cfg, testCfg)
+	err = v.validatePatternsPage(codeBaseDir, cfg, testCfg)
 	if err != nil {
 		return fmt.Errorf("validatePatternsPage() failed: %w", err)
 	}
@@ -545,7 +559,7 @@ func validateWebUIPages(codeBaseDir string, cfg *webui.Config, testCfg *testCfg)
 	return nil
 }
 
-func validateWebUIForTest(codeBaseDir string, testCfg *testCfg, port int) error {
+func (v *validationCfg) validateWebUIForTest(codeBaseDir string, testCfg *testCfg, port int) error {
 	//var stdout, stderr bytes.Buffer
 	fmt.Printf("starting webui for %s on port %d...\n", testCfg.cfg.binary, port)
 
@@ -553,9 +567,10 @@ func validateWebUIForTest(codeBaseDir string, testCfg *testCfg, port int) error 
 	cfg.Name = testCfg.cfg.binary
 	cfg.DatasetDir = testCfg.tempDir
 	cfg.Port = port
+	cfg.ProfilerSrcDir = v.profilerSrcDir
 	err := cfg.Start()
 	if err != nil {
-		return err
+		return fmt.Errorf("cfg.Start() failed: %w", err)
 	}
 	defer func(cfg *webui.Config) error {
 		fmt.Println("shutting the webui down")
@@ -569,7 +584,7 @@ func validateWebUIForTest(codeBaseDir string, testCfg *testCfg, port int) error 
 
 	time.Sleep(1 * time.Second)
 
-	err = validateWebUIPages(codeBaseDir, cfg, testCfg)
+	err = v.validateWebUIPages(codeBaseDir, cfg, testCfg)
 	if err != nil {
 		return fmt.Errorf("validateWebUIPages failed: %w", err)
 	}
@@ -585,7 +600,7 @@ func (v *validationCfg) webUI(codeBaseDir string, collectiveName string) error {
 
 	for _, testCfg := range v.testCfgs {
 		if validationStepIsSet(testCfg.cfg, webuiStep) {
-			err := validateWebUIForTest(codeBaseDir, testCfg, port)
+			err := v.validateWebUIForTest(codeBaseDir, testCfg, port)
 			if err != nil {
 				return fmt.Errorf("validateWebUIForTest() failed: %s", err)
 			}
@@ -600,8 +615,13 @@ func (v *validationCfg) webUI(codeBaseDir string, collectiveName string) error {
 // If keepResults is set to true, the results are *not* removed after execution. They can then be used
 // later on to validate postmortem analysis.
 func (v *validationCfg) profiler(keepResults bool, fullValidation bool) error {
-	_, filename, _, _ := runtime.Caller(0)
-	codeBaseDir := filepath.Join(filepath.Dir(filename), "..", "..", "..")
+	codeBaseDir := ""
+	if v.profilerSrcDir == "" {
+		_, filename, _, _ := runtime.Caller(0)
+		codeBaseDir = filepath.Join(filepath.Dir(filename), "..", "..", "..")
+	} else {
+		codeBaseDir = v.profilerSrcDir
+	}
 
 	// Find MPI
 	mpiBin, err := exec.LookPath("mpirun")
@@ -618,7 +638,7 @@ func (v *validationCfg) profiler(keepResults bool, fullValidation bool) error {
 	// Compile both the profiler libraries and the example
 	log.Println("Building libraries and tests...")
 	cmd := exec.Command(makeBin, "clean", "all")
-	cmd.Dir = filepath.Join(codeBaseDir, "src", "alltoallv")
+	cmd.Dir = filepath.Join(codeBaseDir, "src")
 	err = cmd.Run()
 	if err != nil {
 		return err
@@ -678,6 +698,7 @@ func (v *validationCfg) profiler(keepResults bool, fullValidation bool) error {
 
 func main() {
 	verbose := flag.Bool("v", false, "Enable verbose mode")
+	profilerSrcDirFlag := flag.String("profiler-src", "", "Set the path to the profiler source code")
 	counts := flag.Bool("counts", false, "Validate the count data generated during the validation run of the profiler with an MPI application. Requires the following additional options: -dir, -job, -id.")
 	profilerValidation := flag.Bool("profiler", false, "Perform a validation of the profiler itself running various tests. Requires MPI. Does not require any additional option.")
 	postmortemValidation := flag.Bool("postmortem", false, "Perform a validation of the postmortem analysis tools.")
@@ -692,7 +713,7 @@ func main() {
 
 	defaultListGraphs := fmt.Sprintf("0-%d", profiler.DefaultNumGeneratedGraphs)
 	bigListGraphs := "0-999"
-	sharedLibraries := []string{sharedLibCounts, sharedLibBacktrace, sharedLibLocation, sharedLibLateArrival, sharedLibA2ATime,
+	sharedLibraries := []string{sharedAlltoallvLibCounts, sharedAlltoallvLibBacktrace, sharedAlltoallvLibLocation, sharedAlltoallvLibLateArrival, sharedAlltoallvLibExecTime,
 		sharedLibAlltoAllUnequalCounts, sharedLibAlltoAllUnequalCountsCompact, sharedLibAlltoAllUnequalBacktrace,
 		sharedLibAlltoAllUnequalLocation, sharedLibAlltoAllUnequalLateArrival, sharedLibAlltoAllUnequalA2ATime}
 	validationTests := []Test{
@@ -775,8 +796,8 @@ func main() {
 			totalNumCalls:                  1,
 			numCallsPerComm:                []int{1},
 			numRanksPerComm:                []int{4},
-			source:                         exampleFileC,
-			binary:                         exampleBinaryC,
+			source:                         exampleAlltoallvFileC,
+			binary:                         exampleAlltoallvBinaryC,
 			expectedSendCompactCountsFiles: []string{"send-counters.job0.rank0.txt"},
 			expectedRecvCompactCountsFiles: []string{"recv-counters.job0.rank0.txt"},
 			// todo: expectedCountsFiles
@@ -798,8 +819,8 @@ func main() {
 			totalNumCalls:                  2,
 			numCallsPerComm:                []int{2},
 			numRanksPerComm:                []int{3},
-			source:                         exampleFileF,
-			binary:                         exampleBinaryF,
+			source:                         exampleAlltoallvFileF,
+			binary:                         exampleAlltoallvBinaryF,
 			expectedSendCompactCountsFiles: []string{"send-counters.job0.rank0.txt"},
 			expectedRecvCompactCountsFiles: []string{"recv-counters.job0.rank0.txt"},
 			// todo: expectedCountsFiles
@@ -821,8 +842,8 @@ func main() {
 			totalNumCalls:                  3,
 			numCallsPerComm:                []int{2, 1},
 			numRanksPerComm:                []int{2, 4},
-			source:                         exampleFileMulticommC,
-			binary:                         exampleBinaryMulticommC,
+			source:                         exampleAlltoallvFileMulticommC,
+			binary:                         exampleAlltoallvBinaryMulticommC,
 			expectedSendCompactCountsFiles: []string{"send-counters.job0.rank0.txt", "send-counters.job0.rank2.txt"},
 			expectedRecvCompactCountsFiles: []string{"recv-counters.job0.rank0.txt", "recv-counters.job0.rank2.txt"},
 			// todo: expectedCountsFiles
@@ -844,8 +865,8 @@ func main() {
 			totalNumCalls:                  2,
 			numCallsPerComm:                []int{2},
 			numRanksPerComm:                []int{4},
-			source:                         exampleFileDatatypeC,
-			binary:                         exampleBinaryDatatypeC,
+			source:                         exampleAlltoallvFileDatatypeC,
+			binary:                         exampleAlltoallvBinaryDatatypeC,
 			expectedSendCompactCountsFiles: []string{"send-counters.job0.rank0.txt"},
 			expectedRecvCompactCountsFiles: []string{"recv-counters.job0.rank0.txt"},
 			// todo: expectedCountsFiles
@@ -871,8 +892,8 @@ func main() {
 				totalNumCalls:                  1000000,
 				numCallsPerComm:                []int{1000000},
 				numRanksPerComm:                []int{4},
-				source:                         exampleFileBigCountsC,
-				binary:                         exampleBinaryBigCountsC,
+				source:                         exampleAlltoallvFileBigCountsC,
+				binary:                         exampleAlltoallvBinaryBigCountsC,
 				expectedSendCompactCountsFiles: []string{"send-counters.job0.rank0.txt"},
 				expectedRecvCompactCountsFiles: []string{"recv-counters.job0.rank0.txt"},
 				// todo: expectedCountsFiles
@@ -914,8 +935,13 @@ func main() {
 	}
 
 	_, filename, _, _ := runtime.Caller(0)
+	// We can be either in the context of the profiler itself or the tool source code
+	// and each will use a slightly different path
 	codeBaseDir := filepath.Join(filepath.Dir(filename), "..", "..", "..")
-
+	toolDir := filepath.Join(codeBaseDir, "tools")
+	if !util.PathExists(toolDir) {
+		codeBaseDir = filepath.Join(filepath.Dir(filename), "..", "..")
+	}
 	collectiveName := "alltoallv" // hardcoded for now, detection coming soon
 
 	if *webui {
@@ -928,6 +954,7 @@ func main() {
 	validation.tests = validationTests
 	validation.sharedLibraries = sharedLibraries
 	validation.testCfgs = make(map[string]*testCfg)
+	validation.profilerSrcDir = *profilerSrcDirFlag
 
 	for idx, tt := range validationTests {
 		cfg := new(testCfg)

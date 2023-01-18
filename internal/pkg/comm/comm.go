@@ -51,7 +51,7 @@ func parseCommFile(codeBaseDir string, path string, leadRank int) (*CommsInfo, e
 
 	formatMatch, err := format.CheckDataFormatLineFromProfileFile(lines[0], codeBaseDir)
 	if err != nil {
-		return nil, fmt.Errorf("unable to parse format version: %s", err)
+		return nil, fmt.Errorf("CheckDataFormatLineFromProfileFile() failed in parseCommFile(): %w", err)
 	}
 	if !formatMatch {
 		return nil, fmt.Errorf("data format does not match")
