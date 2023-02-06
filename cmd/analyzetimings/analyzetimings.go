@@ -23,12 +23,12 @@ import (
 func main() {
 	verbose := flag.Bool("v", false, "Enable verbose mode")
 	file := flag.String("file", "", "Timing file that we need to parse to extract timings from")
-	sendCountsFile := flag.String("send-counts", "", "File where all the send counts for the alltoallv calls are stored")
-	recvCountsFile := flag.String("recv-counts", "", "File where all the recv counts for the alltoallv calls are stored")
+	sendCountsFile := flag.String("send-counts", "", "File where all the send counts from the profiler for all the collective calls are stored")
+	recvCountsFile := flag.String("recv-counts", "", "File where all the recv counts from the profiler for all the collective calls are stored")
 
 	flag.Parse()
 
-	logFile := util.OpenLogFile("alltoallv", "extracttimings")
+	logFile := util.OpenLogFile("go_collective_profiler", "extracttimings")
 	defer logFile.Close()
 	if *verbose {
 		nultiWriters := io.MultiWriter(os.Stdout, logFile)
@@ -38,10 +38,10 @@ func main() {
 	}
 
 	if !util.PathExists(*sendCountsFile) {
-		log.Fatalf("%s does not exists", *sendCountsFile)
+		log.Fatalf("%s does not exist", *sendCountsFile)
 	}
 	if !util.PathExists(*recvCountsFile) {
-		log.Fatalf("%s does not exists", *recvCountsFile)
+		log.Fatalf("%s does not exist", *recvCountsFile)
 	}
 
 	inputf, err := os.Open(*file)
