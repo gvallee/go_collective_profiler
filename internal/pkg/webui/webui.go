@@ -367,7 +367,7 @@ func (c *Config) loadData() error {
 		}
 
 		listBins := bins.GetFromInputDescr(binThresholds)
-		data, err := profiler.HandleCountsFiles(c.DatasetDir, sizeThreshold, listBins)
+		data, err := profiler.HandleCountsFiles(c.DatasetDir, sizeThreshold, listBins, false)
 		if err != nil {
 			return err
 		}

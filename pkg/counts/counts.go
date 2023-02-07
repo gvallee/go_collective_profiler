@@ -88,18 +88,35 @@ type HeaderT struct {
 	}
 }
 
+// rawCountsT is the structure storing all the data from a count file from the profiler
 type rawCountsT struct {
+	// Size of the send datatype
 	SendDatatypeSize int
+
+	// Size of the receive datatype
 	RecvDatatypeSize int
-	CommSize         int
-	SendCounts       []string // One line per rank in order, based on the rank number of the communicator used
-	RecvCounts       []string // One line per rank in order, based on the rank number of the communicator used
+
+	// Size of the communicator
+	CommSize int
+
+	// Send counts; one line per rank in order, based on the rank number of the communicator used
+	SendCounts []string
+
+	// Receive counts; one line per rank in order, based on the rank number of the communicator used
+	RecvCounts []string
 }
 
+// RawCountsCallsT is the structure gathering all the data after
+// parsing a count file from the profiler, for a specific communicator.
 type RawCountsCallsT struct {
+	// Communicator lead rank
 	LeadRank int
-	Calls    []int
-	Counts   *rawCountsT
+
+	// Ordered list of all the collective operations involved in the data
+	Calls []int
+
+	// Raw count data per collective call
+	Counts *rawCountsT
 }
 
 // CallData gathers all the data related to one and only one alltoallv call
@@ -231,7 +248,7 @@ type SendRecvStats struct {
 	// TotalRecvNonZeroCounts is the total number of receive count not equal to zero
 	TotalRecvNonZeroCounts int
 
-	// CommSizes is the distribution of communicator size across all alltoallv calls. The key is the size of the communicator; the value is the number of alltoallv calls having that size
+	// CommSizes is the distribution of communicator size across all collective operations. The key is the size of the communicator; the value is the number of alltoallv calls having that size
 	CommSizes map[int]int
 
 	// DatatypesSend stores statistics related to MPI datatypes that are used to send data. The key is the size of the datatype, the value hte number of time the datatype is used
@@ -279,7 +296,7 @@ type SendRecvStats struct {
 	*/
 }
 
-// CommDataT is a structure that allows us to store alltoallv calls' data on a per-communicator basis.
+// CommDataT is a structure that allows us to store data for all collective operations on a per-communicator basis.
 // The communicator is identified by the leadRank, i.e., the comm world rank of the communicator's rank 0.
 // Note that for any leadRank, it is possible to have multiple commDataT since alltoallv calls can be
 // invoked on different communicators with the same leadRank and we are currently limited to compare
@@ -288,8 +305,8 @@ type CommDataT struct {
 	// LeadRank is the rank on COMMWORLD that is rank 0 on the communicator used for the alltoallv operation
 	LeadRank int
 
-	// CallData is the data for all the alltoallv calls performed on the communicator(s) led by leadRank;
-	// rhw key is the call number and the value a pointer to the call's data (several calls can share the same data)
+	// CallData is the data for all the collective calls performed on the communicator(s) led by leadRank;
+	// the key is the call number and the value a pointer to the call's data (several calls can share the same data)
 	CallData map[int]*CallData
 
 	RawCounts []*RawCountsCallsT
@@ -624,6 +641,13 @@ func DetectFileFormat(path string) (int, error) {
 	return FormatUnknown, nil
 }
 
+// ParseCountFile parses a given profiler count file, regardless of the format.
+// The function detects the format and applies the appropriate parser to extract
+// the data.
+// The function's input is the path to the count file to parse.
+// The function returns:
+// - a pointer to raw counters' data
+// - an error handle
 func ParseCountFile(filePath string) (*RawCountsCallsT, error) {
 	format, err := DetectFileFormat(filePath)
 	if err != nil {
@@ -654,4 +678,37 @@ func ParseCountFile(filePath string) (*RawCountsCallsT, error) {
 	}
 
 	return countData, nil
+}
+
+func getJobIdFromFilename(prefix string, leadRank int, filename string) (int, error) {
+	str := strings.TrimPrefix(filename, prefix)
+	str = strings.TrimPrefix(str, "job")
+	tokens := strings.Split(str, ".")
+	str = tokens[0]
+	jobId, err := strconv.Atoi(str)
+	if err != nil {
+		return -1, err
+	}
+	return jobId, nil
+}
+
+func GetJobIdFromLeadRank(inputDir string, leadRank int) (int, error) {
+	list, err := ioutil.ReadDir(inputDir)
+	if err != nil {
+		return -1, err
+	}
+
+	targetSuffix := CompactFormatLeadRankMarker + strconv.Itoa(leadRank) + ".txt"
+
+	for _, f := range list {
+		str := f.Name()
+		if strings.HasPrefix(str, RecvCountersFilePrefix) && strings.HasSuffix(str, targetSuffix) {
+			return getJobIdFromFilename(RecvCountersFilePrefix, leadRank, str)
+		}
+
+		if strings.HasPrefix(str, SendCountersFilePrefix) {
+			return getJobIdFromFilename(SendCountersFilePrefix, leadRank, str)
+		}
+	}
+	return -1, fmt.Errorf("unable to find job ID for lead rank %d in %s", leadRank, inputDir)
 }

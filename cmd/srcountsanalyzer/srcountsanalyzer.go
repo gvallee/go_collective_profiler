@@ -52,7 +52,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	logFile := util.OpenLogFile("alltoallv", cmdName)
+	logFile := util.OpenLogFile("go_collective_profiler", cmdName)
 	defer logFile.Close()
 	if *verbose {
 		nultiWriters := io.MultiWriter(os.Stdout, logFile)
@@ -85,7 +85,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	cs, p, err := patterns.ParseFiles(sendCountsFile, recvCountsFile, numCalls, *rank, *sizeThreshold)
+	cs, p, err := patterns.ParseFiles(sendCountsFile, recvCountsFile, numCalls, *sizeThreshold, true)
 	if err != nil {
 		fmt.Printf("[ERROR] unable to parse count file %s", sendCountsFile)
 		os.Exit(1)

@@ -562,7 +562,8 @@ func prepareRanksMap(codeBaseDir string, dir string) (*location.RankFileData, ma
 	return hm, callMap, callsRanksMap, nil
 }
 
-// CreateAvgMaps uses the send and receive counts to create an average heat map of the data that is sent/received
+// CreateAvgMaps uses the send and receive counts to create an average heat map of the data that is sent/received.
+// The average heat map is based on the total amount of data for all calls divided by the number of calls.
 func CreateAvgMaps(totalNumCalls int, globalSendHeatMap map[int]int, globalRecvHeatMap map[int]int) (map[int]int, map[int]int) {
 	avgSendMap := make(map[int]int)
 	avgRecvMap := make(map[int]int)
