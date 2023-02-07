@@ -282,8 +282,11 @@ func getCallData(reader *bufio.Reader) (*Stats, error) {
 }
 
 // ParseTimingFile returns the timings data from a given timing file.
-// The function returns some metadata (e.g., number of calls, number of ranks) as well as the timings for each call,
-// as well as the total time per rank (time map).
+// The function returns:
+// - the metadata associated to the data contained in the file (e.g., number of calls, number of ranks),
+// - the timings for each collective operation call per rank,
+// - the total time per rank (time map).
+// - an error handle
 func ParseTimingFile(filePath string, codeBaseDir string) (*Metadata, map[int]map[int]float64, map[int]float64, error) {
 	timingFile, err := os.Open(filePath)
 	if err != nil {
@@ -575,4 +578,28 @@ func GetExecTimingFilename(collectiveName string, leadRank int, commID int, jobI
 // GetLateArrivalTimingFilename returns the expected late arrival time file name for a given configuration
 func GetLateArrivalTimingFilename(collectiveName string, leadRank int, commID int, jobID int) string {
 	return collectiveName + lateArrivalTimingsFilenameIdentifier + strconv.Itoa(leadRank) + "_comm" + strconv.Itoa(commID) + "_job" + strconv.Itoa(jobID) + ".md"
+}
+
+func GetJobIdFromDataFiles(dataDir string, collectiveName string, leadRank int, commId int) (int, error) {
+	list, err := ioutil.ReadDir(dataDir)
+	if err != nil {
+		return -1, err
+	}
+
+	for _, f := range list {
+		str := f.Name()
+		leadRankStr := strconv.Itoa(leadRank)
+		commIdStr := strconv.Itoa(commId)
+		expectedPrefix := collectiveName + execTimingsFilenameIdentifier + leadRankStr + "_comm" + commIdStr + "_job"
+		if strings.HasPrefix(str, expectedPrefix) {
+			str = strings.TrimPrefix(str, expectedPrefix)
+			str = strings.TrimSuffix(str, ".md")
+			jobId, err := strconv.Atoi(str)
+			if err != nil {
+				return -1, err
+			}
+			return jobId, nil
+		}
+	}
+	return -1, fmt.Errorf("unable to get jobId for %s, lead rank %d and communicator ID %d", collectiveName, leadRank, commId)
 }

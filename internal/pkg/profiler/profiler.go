@@ -573,12 +573,12 @@ func CreateBinsFromCounts(basedir string, rank int, cs map[int]*counts.CallData,
 	return nil
 }
 
-// analyzeJobRankCounts returns statistics and data about the operations that were performed on a given communicator in the context of a job.
+// AnalyzeJobRankCounts returns statistics and data about the operations that were performed on a given communicator in the context of a job.
 // The returned data consist of:
 // 1. the map of all the calls (the key is the call number; the value is the data about the call),
 // 2. statistics based on the send counts,
 // 3. patterns' data.
-func analyzeJobRankCounts(basedir string, jobid int, rank int, sizeThreshold int) (map[int]*counts.CallData, counts.SendRecvStats, patterns.Data, error) {
+func AnalyzeJobRankCounts(basedir string, jobid int, rank int, sizeThreshold int, withProgressBar bool) (map[int]*counts.CallData, counts.SendRecvStats, patterns.Data, error) {
 	var p patterns.Data
 	var sendRecvStats counts.SendRecvStats
 	var cs map[int]*counts.CallData // The key is the call number and the value a pointer to the call's data (several calls can share the same data)
@@ -593,7 +593,7 @@ func analyzeJobRankCounts(basedir string, jobid int, rank int, sizeThreshold int
 
 	// Note that by extracting the patterns, it will implicitly parses the send/recv counts
 	// since it is necessary to figure out patterns.
-	cs, p, err = patterns.ParseFiles(sendCountFile, recvCountFile, numCalls, rank, sizeThreshold)
+	cs, p, err = patterns.ParseFiles(sendCountFile, recvCountFile, numCalls, sizeThreshold, withProgressBar)
 	if err != nil {
 		return cs, sendRecvStats, p, fmt.Errorf("unable to parse count file %s: %s", sendCountFile, err)
 	}
@@ -656,7 +656,7 @@ func getLeadRanksFromCountFiles(sendCountFiles []string, recvCountFiles []string
 	return sendRanks, nil
 }
 
-func analyzeCountFiles(basedir string, sendCountFiles []string, recvCountFiles []string, sizeThreshold int, listBins []int) (*AnalysisResults, error) {
+func analyzeCountFiles(basedir string, sendCountFiles []string, recvCountFiles []string, sizeThreshold int, listBins []int, withProgressBar bool) (*AnalysisResults, error) {
 	var err error
 
 	jobid, err := getJobIDFromCountFiles(sendCountFiles, recvCountFiles)
@@ -674,12 +674,12 @@ func analyzeCountFiles(basedir string, sendCountFiles []string, recvCountFiles [
 	analysisResults.AllPatterns = make(map[int]patterns.Data)
 
 	for _, rank := range commLeadRanks {
-		commCounts, err := counts.LoadCommunicatorRawCompactFormatCounts(basedir, jobid, rank)
+		commCounts, err := counts.LoadCommunicatorRawCompactFormatCounts(basedir, jobid, rank, true)
 		if err != nil {
 			return nil, fmt.Errorf("counts.LoadCommunicatorRawCompactFormatCounts() failed: %w", err)
 		}
 
-		callsData, sendRecvStats, p, err := analyzeJobRankCounts(basedir, jobid, rank, sizeThreshold)
+		callsData, sendRecvStats, p, err := AnalyzeJobRankCounts(basedir, jobid, rank, sizeThreshold, withProgressBar)
 		if err != nil {
 			return nil, fmt.Errorf("analyzeJobRankCounts() failed: %s", err)
 		}
@@ -727,7 +727,7 @@ func FindCompactFormatCountsFiles(dir string) ([]string, []string, []string, err
 	return profileFiles, sendCountsFiles, recvCountsFiles, nil
 }
 
-func getJobIDFromCountsFiles(files []string) (int, error) {
+func GetJobIDFromCountsFiles(files []string) (int, error) {
 	jobID := -1
 
 	for _, file := range files {
@@ -763,14 +763,14 @@ func getJobIDFromCountsFiles(files []string) (int, error) {
 
 // HandleCountsFiles is a high-level function that can be used to analysis all the count files
 // in a specific directory
-func HandleCountsFiles(dir string, sizeThreshold int, listBins []int) (*AnalysisResults, error) {
+func HandleCountsFiles(dir string, sizeThreshold int, listBins []int, withProgressBar bool) (*AnalysisResults, error) {
 	_, sendCountsFiles, recvCountsFiles, err := FindCompactFormatCountsFiles(dir)
 	if err != nil {
 		return nil, err
 	}
 
 	// Analyze all the files we found. It checks for consistency with all jobIDs that can be detected.
-	return analyzeCountFiles(dir, sendCountsFiles, recvCountsFiles, sizeThreshold, listBins)
+	return analyzeCountFiles(dir, sendCountsFiles, recvCountsFiles, sizeThreshold, listBins, withProgressBar)
 }
 
 // FindRawCountFiles walks all the sub-directories from a given directory and
@@ -1052,7 +1052,7 @@ func (cfg *PostmortemConfig) Analyze() error {
 	if requestedSteps[currentStep] {
 		fmt.Printf("* Step %d/%d: analyzing counts...\n", currentStep, totalNumSteps)
 		t := timer.Start()
-		resultsStep1, err = HandleCountsFiles(cfg.DatasetDir, cfg.SizeThreshold, listBins)
+		resultsStep1, err = HandleCountsFiles(cfg.DatasetDir, cfg.SizeThreshold, listBins, true)
 		duration := t.Stop()
 		if err != nil {
 			return fmt.Errorf("unable to analyze counts: %s", err)

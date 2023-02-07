@@ -215,7 +215,7 @@ func TestParseFile(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		_, patterns, err := ParseFiles(tt.sendCountsFile, tt.recvCountsFile, tt.numCalls, tt.leadRank, tt.sizeThreshold)
+		_, patterns, err := ParseFiles(tt.sendCountsFile, tt.recvCountsFile, tt.numCalls, tt.sizeThreshold, true)
 		if err != nil {
 			t.Fatalf("ParseFile() failed: %s", err)
 		}

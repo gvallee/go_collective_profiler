@@ -251,11 +251,11 @@ func GetCompactHeader(reader *bufio.Reader) (HeaderT, error) {
 			return header, readerErr
 		}
 	}
-
 	return header, nil
 }
 
-// GetCompactCounters returns the counts using the provided reader
+// GetCompactCounters returns the counts using the provided reader.
+// The function returns the counts from the current count data section.
 func GetCompactCounters(reader *bufio.Reader) ([]string, error) {
 	var callCounters []string
 
@@ -368,6 +368,13 @@ func extractRankCounters(callCounters []string, rank int) (string, error) {
 	return "", fmt.Errorf("unable to find counters for rank %d", rank)
 }
 
+// ParseRawCompactFormatFile parse the data from a profile count file that
+// uses the compact format. The input is the path to count file from the
+// profiler. The function returns:
+// - the list of counts per rank in string format
+// - a list of call identifiers
+// - the datatype size
+// - an error handle
 func ParseRawCompactFormatFile(f string) ([]string, []int, int, error) {
 	var counters []string
 	datatypeSize := 0
@@ -382,13 +389,15 @@ func ParseRawCompactFormatFile(f string) ([]string, []int, int, error) {
 	reader := bufio.NewReader(file)
 	for {
 		header, readerErr1 := GetCompactHeader(reader)
-		callIDs = append(callIDs, header.CallIDs...)
-		datatypeSize = header.DatatypeInfo.CompactFormatDatatypeInfo.DatatypeSize
-
+		if readerErr1 == io.EOF {
+			break
+		}
 		if readerErr1 != nil && readerErr1 != io.EOF {
 			fmt.Printf("ERROR: %s", readerErr1)
 			return nil, nil, 0, fmt.Errorf("unable to read header from %s: %w", f, readerErr1)
 		}
+		callIDs = append(callIDs, header.CallIDs...)
+		datatypeSize = header.DatatypeInfo.CompactFormatDatatypeInfo.DatatypeSize
 
 		callCounters, readerErr2 := GetCompactCounters(reader)
 		if readerErr2 != nil && readerErr2 != io.EOF {
@@ -467,15 +476,17 @@ func ReadCallRankCounters(files []string, rank int, callNum int) (string, int, b
 
 // LoadCallsData parses the count files and load all the data about all the calls.
 // The returned data is map where the key is the call number and the value the data about the call.
-func LoadCallsData(sendCountsFile, recvCountsFile string, rank int, msgSizeThreshold int) (map[int]*CallData, error) {
+func LoadCallsData(sendCountsFile, recvCountsFile string, msgSizeThreshold int, withProgressBar bool) (map[int]*CallData, error) {
 	var readerErr error
-
+	var bar *progress.Bar
 	callData := make(map[int]*CallData) // The key is the call number and the value a pointer to the call's data (several calls can share the same data)
 
-	bar := progress.NewBar(2, "Reading count files")
-	defer progress.EndBar(bar)
+	if withProgressBar {
+		bar = progress.NewBar(2, "Reading count files")
+		defer progress.EndBar(bar)
 
-	bar.Increment(1)
+		bar.Increment(1)
+	}
 	sendFile, err := os.Open(sendCountsFile)
 	if err != nil {
 		return nil, fmt.Errorf("unable to open %s: %w", sendCountsFile, err)
@@ -519,7 +530,9 @@ func LoadCallsData(sendCountsFile, recvCountsFile string, rank int, msgSizeThres
 		}
 	}
 
-	bar.Increment(1)
+	if withProgressBar {
+		bar.Increment(1)
+	}
 	recvFile, err := os.Open(recvCountsFile)
 	if err != nil {
 		return nil, fmt.Errorf("unable to open %s: %w", recvCountsFile, err)
@@ -583,6 +596,7 @@ func findRecvCountersFiles(basedir string, jobid int, id int) ([]string, error) 
 }
 
 // GetFiles returns the full path to the count files for a given rank of a given job
+// The function return the file name (not path) of the send count file and the receive count file
 func GetFiles(jobid int, rank int) (string, string) {
 	suffix := "job" + strconv.Itoa(jobid) + ".rank" + strconv.Itoa(rank) + ".txt"
 	return SendCountersFilePrefix + suffix, RecvCountersFilePrefix + suffix
@@ -739,16 +753,25 @@ func LoadCountsFromCompactFormatFile(file string, ctxt int) (*RawCountsCallsT, e
 		if err != nil {
 			return nil, fmt.Errorf("parseRawFile() failed (%s): %w", file, err)
 		}
+		if recvDatatypeSize == 0 {
+			return nil, fmt.Errorf("invalid receive datatype size from %s: %d", file, recvDatatypeSize)
+		}
 		// Convert compact counts so we are independent from the compact format.
 		data.Counts.RecvCounts, err = compactCountFormatToList(recvRawCounters)
 		if err != nil {
 			return nil, err
 		}
 		data.Counts.RecvDatatypeSize = recvDatatypeSize
+		if data.Counts.CommSize == 0 {
+			data.Counts.CommSize = len(data.Counts.RecvCounts)
+		}
 	case CompactFormatSendContext:
 		sendRawCounters, callIDs, sendDatatypeSize, err = ParseRawCompactFormatFile(file)
 		if err != nil {
 			return nil, fmt.Errorf("parseRawFile() failed (%s): %w", file, err)
+		}
+		if sendDatatypeSize == 0 {
+			return nil, fmt.Errorf("invalid send datatype size from %s: %d", file, sendDatatypeSize)
 		}
 		// Convert compact counts so we are independent from the compact format.
 		data.Counts.SendCounts, err = compactCountFormatToList(sendRawCounters)
@@ -756,6 +779,9 @@ func LoadCountsFromCompactFormatFile(file string, ctxt int) (*RawCountsCallsT, e
 			return nil, err
 		}
 		data.Counts.SendDatatypeSize = sendDatatypeSize
+		if data.Counts.CommSize == 0 {
+			data.Counts.CommSize = len(data.Counts.SendCounts)
+		}
 	default:
 		return nil, fmt.Errorf("unsupported mode: %d (should be %d or %d)", ctxt, CompactFormatSendContext, CompactFormatRecvContext)
 	}
@@ -765,23 +791,60 @@ func LoadCountsFromCompactFormatFile(file string, ctxt int) (*RawCountsCallsT, e
 	return data, err
 }
 
-func LoadCommunicatorRawCompactFormatCounts(outputDir string, jobId int, commLeadRank int) ([]*RawCountsCallsT, error) {
+func LoadCommunicatorRawCompactFormatCountsFromFiles(sendCountFilePath string, recvCountFilePath string) ([]*RawCountsCallsT, error) {
 	var rawCounts []*RawCountsCallsT
+
+	sendCounts, err := LoadCountsFromCompactFormatFile(sendCountFilePath, CompactFormatSendContext)
+	if err != nil {
+		return nil, fmt.Errorf("unable to parse send counts (%s): %w", sendCountFilePath, err)
+	}
+
+	recvCounts, err := LoadCountsFromCompactFormatFile(recvCountFilePath, CompactFormatRecvContext)
+	if err != nil {
+		return nil, fmt.Errorf("unable to parse recv counts (%s): %w", recvCountFilePath, err)
+	}
+
+	// Combine all the data in a single data structure that will hold both send and recv data
+	sendCounts.Counts.RecvCounts = recvCounts.Counts.RecvCounts
+	sendCounts.Counts.RecvDatatypeSize = recvCounts.Counts.RecvDatatypeSize
+	idx := rawSendCountsAlreadyExists(sendCounts, rawCounts)
+	if idx == -1 {
+		rawCounts = append(rawCounts, sendCounts)
+	} else {
+		rawCounts[idx].Calls = append(rawCounts[idx].Calls, sendCounts.Calls...)
+	}
+
+	return rawCounts, nil
+}
+
+// LoadCommunicatorRawCompactFormatCounts loads the counts for a specific communicator.
+// The communicator is identified by the job ID, the lead rank and the directory where the
+// data can be found.
+// The function returns:
+// - a slice of raw counts per calls, counts are not duplicated, which means the RawCountsCallsT specifies which calls are associated to the counts
+// - an error handle
+func LoadCommunicatorRawCompactFormatCounts(dataDir string, jobId int, commLeadRank int, withProgressBar bool) ([]*RawCountsCallsT, error) {
+	var rawCounts []*RawCountsCallsT
+	var b *progress.Bar
 	recvCountFile := fmt.Sprintf("recv-counters.job%d.rank%d.txt", jobId, commLeadRank)
 	sendCountFile := fmt.Sprintf("send-counters.job%d.rank%d.txt", jobId, commLeadRank)
 
-	b := progress.NewBar(2, fmt.Sprintf("Load count files for communicator %d", commLeadRank))
-	defer progress.EndBar(b)
+	if withProgressBar {
+		b = progress.NewBar(2, fmt.Sprintf("Load count files for communicator %d", commLeadRank))
+		defer progress.EndBar(b)
 
-	b.Increment(1)
-	file := filepath.Join(outputDir, sendCountFile)
+		b.Increment(1)
+	}
+	file := filepath.Join(dataDir, sendCountFile)
 	rc, err := LoadCountsFromCompactFormatFile(file, CompactFormatSendContext)
 	if err != nil {
 		return nil, fmt.Errorf("unable to parse send counts (%s): %w", sendCountFile, err)
 	}
 
-	b.Increment(1)
-	file = filepath.Join(outputDir, recvCountFile)
+	if withProgressBar {
+		b.Increment(1)
+	}
+	file = filepath.Join(dataDir, recvCountFile)
 	rc2, err := LoadCountsFromCompactFormatFile(file, CompactFormatRecvContext)
 	if err != nil {
 		return nil, fmt.Errorf("unable to parse recv counts (%s): %w", recvCountFile, err)
@@ -811,6 +874,13 @@ func GetContextFromFileName(filename string) int {
 	return CompactFormatUnknownContext
 }
 
+// GetMetadataFromCompactFormatCountFileName returns the metadata from the count file name.
+// The function's input is the name of the count file from the profile.
+// The function returns:
+// - the context of the input file, i.e., counts.CompactFormatSendContext or counts.CompactFormatRecvContext
+// - the job ID
+// - the communicator lead rank
+// - an error handle
 func GetMetadataFromCompactFormatCountFileName(filename string) (int, int, int, error) {
 	ctxt := CompactFormatUnknownContext
 	if strings.HasPrefix(filename, SendCountersFilePrefix) {

@@ -490,10 +490,11 @@ func WriteSubcommNto1Patterns(fd *os.File, ranks []int, stats map[int]counts.Sen
 // The returned data consist of:
 // 1. the map of all the calls (the key is the call number; the value is the data about the call),
 // 2. patterns' data.
-func ParseFiles(sendCountsFile string, recvCountsFile string, numCalls int, rank int, sizeThreshold int) (map[int]*counts.CallData, Data, error) {
+func ParseFiles(sendCountsFile string, recvCountsFile string, numCalls int, sizeThreshold int, withProgressBar bool) (map[int]*counts.CallData, Data, error) {
 	var patterns Data
+	var b *progress.Bar
 
-	callData, err := counts.LoadCallsData(sendCountsFile, recvCountsFile, rank, sizeThreshold)
+	callData, err := counts.LoadCallsData(sendCountsFile, recvCountsFile, sizeThreshold, withProgressBar)
 	if err != nil {
 		return nil, patterns, fmt.Errorf("counts.LoadCallsData() failed: %s", err)
 	}
@@ -501,14 +502,18 @@ func ParseFiles(sendCountsFile string, recvCountsFile string, numCalls int, rank
 		return nil, patterns, fmt.Errorf("counts.LoadCallsData() did not return any data")
 	}
 
-	b := progress.NewBar(numCalls, "Analyzing alltoallv calls")
-	defer progress.EndBar(b)
+	if withProgressBar {
+		b = progress.NewBar(numCalls, "Analyzing alltoallv calls")
+		defer progress.EndBar(b)
+	}
 	for i := 0; i < numCalls; i++ {
 		if i >= len(callData) {
 			return nil, patterns, fmt.Errorf("out-of-range call index")
 		}
 
-		b.Increment(1)
+		if withProgressBar {
+			b.Increment(1)
+		}
 
 		if _, ok := callData[i]; !ok {
 			// The call is not on the communicator that is parsed, we just move to the next one
