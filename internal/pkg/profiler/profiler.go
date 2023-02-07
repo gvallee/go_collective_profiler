@@ -23,7 +23,6 @@ import (
 	"github.com/gvallee/go_collective_profiler/internal/pkg/analyzer"
 	"github.com/gvallee/go_collective_profiler/internal/pkg/backtraces"
 	"github.com/gvallee/go_collective_profiler/internal/pkg/bins"
-	"github.com/gvallee/go_collective_profiler/internal/pkg/comm"
 	"github.com/gvallee/go_collective_profiler/internal/pkg/datafilereader"
 	"github.com/gvallee/go_collective_profiler/internal/pkg/format"
 	"github.com/gvallee/go_collective_profiler/internal/pkg/location"
@@ -34,9 +33,10 @@ import (
 	"github.com/gvallee/go_collective_profiler/internal/pkg/plugins"
 	"github.com/gvallee/go_collective_profiler/internal/pkg/progress"
 	"github.com/gvallee/go_collective_profiler/internal/pkg/timer"
-	"github.com/gvallee/go_collective_profiler/internal/pkg/timings"
+	"github.com/gvallee/go_collective_profiler/pkg/comm"
 	"github.com/gvallee/go_collective_profiler/pkg/counts"
 	"github.com/gvallee/go_collective_profiler/pkg/errors"
+	"github.com/gvallee/go_collective_profiler/pkg/timings"
 )
 
 const (

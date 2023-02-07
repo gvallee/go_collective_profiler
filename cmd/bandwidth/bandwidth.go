@@ -18,11 +18,11 @@ import (
 	"sort"
 
 	"github.com/gvallee/go_collective_profiler/internal/pkg/bandwidth"
-	"github.com/gvallee/go_collective_profiler/internal/pkg/comm"
 	"github.com/gvallee/go_collective_profiler/internal/pkg/patterns"
 	"github.com/gvallee/go_collective_profiler/internal/pkg/profiler"
-	"github.com/gvallee/go_collective_profiler/internal/pkg/timings"
+	"github.com/gvallee/go_collective_profiler/pkg/comm"
 	"github.com/gvallee/go_collective_profiler/pkg/counts"
+	"github.com/gvallee/go_collective_profiler/pkg/timings"
 	"github.com/gvallee/go_util/pkg/util"
 )
 
