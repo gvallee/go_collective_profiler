@@ -25,9 +25,9 @@ import (
 	"github.com/gvallee/go_collective_profiler/internal/pkg/hash"
 	"github.com/gvallee/go_collective_profiler/internal/pkg/location"
 	"github.com/gvallee/go_collective_profiler/internal/pkg/profiler"
-	"github.com/gvallee/go_collective_profiler/internal/pkg/timings"
 	"github.com/gvallee/go_collective_profiler/internal/pkg/webui"
 	"github.com/gvallee/go_collective_profiler/pkg/counts"
+	"github.com/gvallee/go_collective_profiler/pkg/timings"
 	"github.com/gvallee/go_util/pkg/util"
 )
 

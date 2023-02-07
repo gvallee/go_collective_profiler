@@ -580,7 +580,7 @@ func GetLateArrivalTimingFilename(collectiveName string, leadRank int, commID in
 	return collectiveName + lateArrivalTimingsFilenameIdentifier + strconv.Itoa(leadRank) + "_comm" + strconv.Itoa(commID) + "_job" + strconv.Itoa(jobID) + ".md"
 }
 
-func GetJobIdFromDataFiles(dataDir string, collectiveName string, leadRank int, commId int) (int, error) {
+func getJobIdFromFileName(identifier string, dataDir string, collectiveName string, leadRank int, commId int) (int, error) {
 	list, err := ioutil.ReadDir(dataDir)
 	if err != nil {
 		return -1, err
@@ -590,7 +590,7 @@ func GetJobIdFromDataFiles(dataDir string, collectiveName string, leadRank int, 
 		str := f.Name()
 		leadRankStr := strconv.Itoa(leadRank)
 		commIdStr := strconv.Itoa(commId)
-		expectedPrefix := collectiveName + execTimingsFilenameIdentifier + leadRankStr + "_comm" + commIdStr + "_job"
+		expectedPrefix := collectiveName + identifier + leadRankStr + "_comm" + commIdStr + "_job"
 		if strings.HasPrefix(str, expectedPrefix) {
 			str = strings.TrimPrefix(str, expectedPrefix)
 			str = strings.TrimSuffix(str, ".md")
@@ -602,4 +602,12 @@ func GetJobIdFromDataFiles(dataDir string, collectiveName string, leadRank int, 
 		}
 	}
 	return -1, fmt.Errorf("unable to get jobId for %s, lead rank %d and communicator ID %d", collectiveName, leadRank, commId)
+}
+
+func GetJobIdFromDataFiles(dataDir string, collectiveName string, leadRank int, commId int) (int, error) {
+	return getJobIdFromFileName(execTimingsFilenameIdentifier, dataDir, collectiveName, leadRank, commId)
+}
+
+func GetJobIdFromLateArrivalDataFiles(dataDir string, collectiveName string, leadRank int, commId int) (int, error) {
+	return getJobIdFromFileName(lateArrivalTimingsFilenameIdentifier, dataDir, collectiveName, leadRank, commId)
 }
