@@ -51,7 +51,7 @@ test:
 	cd internal/pkg/bins; go test -v
 	cd internal/pkg/maps; go test -v
 	cd internal/pkg/notation; go test -v
-	cd internal/pkg/timings; go test -v
+	cd pkg/timings; go test -v
 	cd internal/pkg/scale; go test -v
 	cd internal/pkg/plot; go test -v
 	cd internal/pkg/location; go test -v
