@@ -540,7 +540,7 @@ func GetCountProfilerFileDesc(basedir string, jobid int, rank int) (OutputFileIn
 }
 
 // CreateBinsFromCounts goes through all the call and all the counts to create bins
-func CreateBinsFromCounts(basedir string, rank int, cs map[int]*counts.CallData, listBins []int) error {
+func CreateBinsFromCounts(basedir string, commId int, rank int, cs map[int]*counts.CallData, listBins []int) error {
 	// Figure basic required data such as jobid and lead rank
 	_, sendCountsFiles, _, err := FindCompactFormatCountsFiles(basedir)
 	if err != nil {
@@ -552,7 +552,7 @@ func CreateBinsFromCounts(basedir string, rank int, cs map[int]*counts.CallData,
 	}
 	jobid := sendJobids[0]
 
-	if !bins.FilesExist(basedir, jobid, rank, listBins) {
+	if !bins.FilesExist(basedir, jobid, commId, rank, listBins) {
 		b := progress.NewBar(len(cs), "Bin creation")
 		defer progress.EndBar(b)
 		for _, callData := range cs {
@@ -563,7 +563,7 @@ func CreateBinsFromCounts(basedir string, rank int, cs map[int]*counts.CallData,
 			if err != nil {
 				return err
 			}
-			err = bins.Save(basedir, jobid, rank, sendBins)
+			err = bins.Save(basedir, jobid, commId, rank, sendBins)
 			if err != nil {
 				return err
 			}
@@ -1219,7 +1219,8 @@ func (cfg *PostmortemConfig) Analyze() error {
 			return fmt.Errorf("step %d requires results for step 1 which are undefined", currentStep)
 		}
 		for _, callData := range resultsStep1.AllCallsData {
-			err := CreateBinsFromCounts(cfg.DatasetDir, callData.LeadRank, callData.CallData, listBins)
+			commId := 0
+			err := CreateBinsFromCounts(cfg.DatasetDir, commId, callData.LeadRank, callData.CallData, listBins)
 			if err != nil {
 				return err
 			}

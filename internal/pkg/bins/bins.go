@@ -27,10 +27,10 @@ type Data struct {
 	Size int
 }
 
-func getOutputFile(dir string, jobid, rank int, b Data) string {
-	outputFile := fmt.Sprintf("bin.job%d.rank%d_%d-%d.txt", jobid, rank, b.Min, b.Max)
+func getOutputFile(dir string, jobid, commId int, rank int, b Data) string {
+	outputFile := fmt.Sprintf("bin.job%d.comm%d.rank%d_%d-%d.txt", jobid, commId, rank, b.Min, b.Max)
 	if b.Max == -1 {
-		outputFile = fmt.Sprintf("bin.job%d.rank%d_%d+.txt", jobid, rank, b.Min)
+		outputFile = fmt.Sprintf("bin.job%d.comm%d.rank%d_%d+.txt", jobid, commId, rank, b.Min)
 	}
 	if dir != "" {
 		outputFile = filepath.Join(dir, outputFile)
@@ -39,10 +39,10 @@ func getOutputFile(dir string, jobid, rank int, b Data) string {
 	return outputFile
 }
 
-func FilesExist(outputDir string, jobid int, rank int, listBins []int) bool {
+func FilesExist(outputDir string, jobid int, commId int, rank int, listBins []int) bool {
 	bins := Create(listBins) // Create is a cheap operation
 	for _, b := range bins {
-		if !util.PathExists(getOutputFile(outputDir, jobid, rank, b)) {
+		if !util.PathExists(getOutputFile(outputDir, jobid, commId, rank, b)) {
 			return false
 		}
 	}
@@ -136,19 +136,23 @@ func GetFromCounts(counts []string, bins []Data, numCalls int, datatypeSize int)
 
 // Save writes the data of all the bins into output file. The output files
 // are created in a target output directory.
-func Save(dir string, jobid, rank int, bins []Data) error {
+func Save(dir string, jobid, commId, rank int, bins []Data) error {
 	for _, b := range bins {
-		outputFile := getOutputFile(dir, jobid, rank, b)
+		outputFile := getOutputFile(dir, jobid, commId, rank, b)
+		if outputFile == "" {
+			return fmt.Errorf("unable to get output file for directory %s, jobId: %d, commId: %d, rank: %d", dir, jobid, commId, rank)
+		}
 		f, err := os.OpenFile(outputFile, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0755)
 		if err != nil {
-			return fmt.Errorf("unable to create file %s: %s", outputFile, err)
+			return fmt.Errorf("unable to create file %s: %w", outputFile, err)
 		}
 		defer f.Close()
 
 		_, err = f.WriteString(fmt.Sprintf("%d\n", b.Size))
 		if err != nil {
-			return fmt.Errorf("unable to write bin to file: %s", err)
+			return fmt.Errorf("unable to write bin to file: %w", err)
 		}
+		fmt.Printf("%s successfully created\n", outputFile)
 	}
 	return nil
 }
@@ -184,11 +188,14 @@ func GetFromReader(reader *bufio.Reader, listBins []int) ([]Data, error) {
 // GetFromFile opens a count file and classify all counts into bins
 // based on a list of threshold sizes
 func GetFromFile(filePath string, listBins []int) ([]Data, error) {
+	if filePath == "" {
+		return nil, fmt.Errorf("undefined output file (list bins: %s)", notation.CompressIntArray(listBins))
+	}
 	log.Printf("Creating bins out of values from %s\n", filePath)
 
 	f, err := os.Open(filePath)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("unable to open %s: %w", filePath, err)
 	}
 	defer f.Close()
 

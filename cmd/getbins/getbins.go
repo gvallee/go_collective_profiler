@@ -14,17 +14,36 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"runtime"
 
 	"github.com/gvallee/go_collective_profiler/internal/pkg/bins"
-	"github.com/gvallee/go_collective_profiler/internal/pkg/datafilereader"
+	"github.com/gvallee/go_collective_profiler/pkg/comm"
+	"github.com/gvallee/go_collective_profiler/pkg/counts"
 	"github.com/gvallee/go_util/pkg/util"
 )
 
+func getBinsFromCountFile(inputFile string, jobId int, commId int, leadRank int, listBins []int, outputDir string) error {
+	if inputFile == "" {
+		return fmt.Errorf("undefined input file")
+	}
+	b, err := bins.GetFromFile(inputFile, listBins)
+	if err != nil {
+		return fmt.Errorf("unable to get bins: %w", err)
+	}
+
+	err = bins.Save(outputDir, jobId, commId, leadRank, b)
+	if err != nil {
+		return fmt.Errorf("unable to save data in %s: %w", outputDir, err)
+	}
+	return nil
+}
+
 func main() {
 	verbose := flag.Bool("v", false, "Enable verbose mode")
-	file := flag.String("file", "", "Input file with all the counts")
+	inputDirFlag := flag.String("input", "", "Input directory where all the data from the profiler is stored")
 	binThresholds := flag.String("bins", "200", "Comma-separated list of thresholds to use for the creation of bins")
-	dir := flag.String("dir", "", "Output directory")
+	outputDirFlag := flag.String("output", "", "Output directory")
+	profilerPathFlag := flag.String("profiler-src-dir", "", "When using the tools separately, path to directory where the profiler source is (optional)")
 	help := flag.Bool("h", false, "Help message")
 
 	flag.Parse()
@@ -34,9 +53,10 @@ func main() {
 		fmt.Printf("%s analyzes a given count file and classifying all the counts into bins", cmdName)
 		fmt.Println("\nUsage:")
 		flag.PrintDefaults()
+		os.Exit(0)
 	}
 
-	logFile := util.OpenLogFile("alltoallv", cmdName)
+	logFile := util.OpenLogFile("go_collective_profiler", cmdName)
 	defer logFile.Close()
 	if *verbose {
 		nultiWriters := io.MultiWriter(os.Stdout, logFile)
@@ -45,30 +65,38 @@ func main() {
 		log.SetOutput(ioutil.Discard)
 	}
 
-	jobids, err := datafilereader.GetJobIDsFromFileNames([]string{*file})
-	if err != nil || len(jobids) != 1 {
-		fmt.Println("[ERROR] unable to get job ID from filename")
-		os.Exit(1)
+	_, filename, _, _ := runtime.Caller(0)
+	codeBaseDir := filepath.Join(filepath.Dir(filename), "..", "..", "..")
+
+	// Get data about the communicator
+	profilerSrcDir := *profilerPathFlag
+	if profilerSrcDir == "" {
+		profilerSrcDir = codeBaseDir
 	}
-
-	ranks, err := datafilereader.GetRanksFromFileNames([]string{*file})
-	if err != nil || len(ranks) != 1 {
-		fmt.Println("[ERROR] unable to get rank from filename")
-		os.Exit(1)
-	}
-
-	listBins := bins.GetFromInputDescr(*binThresholds)
-	log.Printf("Ready to create %d bins\n", len(listBins))
-
-	b, err := bins.GetFromFile(*file, listBins)
+	commData, err := comm.GetData(profilerSrcDir, *inputDirFlag)
 	if err != nil {
-		fmt.Printf("[ERROR] Unable to get bins: %s", err)
+		fmt.Printf("ERROR: comm.GetData() failed: %s\n", err)
 		os.Exit(1)
 	}
 
-	err = bins.Save(*dir, jobids[0], ranks[0], b)
-	if err != nil {
-		fmt.Printf("[ERROR] Unable to save data in %s: %s\n", *dir, err)
-		os.Exit(1)
+	// Find all count files
+	for leadRank, commIds := range commData.LeadMap {
+		for _, commId := range commIds {
+			listBins := bins.GetFromInputDescr(*binThresholds)
+			jobId, err := counts.GetJobIdFromLeadRank(*inputDirFlag, leadRank)
+			if err != nil {
+				fmt.Printf("ERROR: counts.GetJobIdFromLeadRank() failed: %s\n", err)
+				os.Exit(1)
+			}
+			log.Printf("Ready to create %d bins\n", len(listBins))
+
+			countFilePath := counts.GetSendCountFile(jobId, leadRank)
+			countFilePath = filepath.Join(*inputDirFlag, countFilePath)
+			err = getBinsFromCountFile(countFilePath, jobId, commId, leadRank, listBins, *outputDirFlag)
+			if err != nil {
+				fmt.Printf("ERROR: getBinsFromCountFile() failed: %s\n", err)
+				os.Exit(1)
+			}
+		}
 	}
 }
