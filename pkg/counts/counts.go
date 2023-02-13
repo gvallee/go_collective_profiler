@@ -36,6 +36,7 @@ const (
 	RankListPrefix              = "Rank(s) "
 	CompactFormatLeadRankMarker = ".rank"
 	CompactFormatJobIDMarker    = "job"
+	CompactFormatFileType       = ".txt"
 
 	/* All the constants related to the standard format */
 	StandardFormatSendDatatypeMarker = "Send datatype size: "
@@ -315,7 +316,7 @@ type CommDataT struct {
 func getInfoFromFilename(path string) (int, int, int, error) {
 	filename := filepath.Base(path)
 	filename = strings.ReplaceAll(filename, "validation_data-", "")
-	filename = strings.ReplaceAll(filename, ".txt", "")
+	filename = strings.ReplaceAll(filename, CompactFormatFileType, "")
 	tokens := strings.Split(filename, "-")
 	if len(tokens) != 3 {
 		return -1, -1, -1, fmt.Errorf("filename has the wrong format")
@@ -692,13 +693,17 @@ func getJobIdFromFilename(prefix string, leadRank int, filename string) (int, er
 	return jobId, nil
 }
 
+func GetSendCountFile(jobId, leadRank int) string {
+	return fmt.Sprintf("%s%s%d%s%d%s", SendCountersFilePrefix, CompactFormatJobIDMarker, jobId, CompactFormatLeadRankMarker, leadRank, CompactFormatFileType)
+}
+
 func GetJobIdFromLeadRank(inputDir string, leadRank int) (int, error) {
 	list, err := ioutil.ReadDir(inputDir)
 	if err != nil {
 		return -1, err
 	}
 
-	targetSuffix := CompactFormatLeadRankMarker + strconv.Itoa(leadRank) + ".txt"
+	targetSuffix := CompactFormatLeadRankMarker + strconv.Itoa(leadRank) + CompactFormatFileType
 
 	for _, f := range list {
 		str := f.Name()
