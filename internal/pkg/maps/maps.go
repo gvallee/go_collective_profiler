@@ -620,7 +620,7 @@ func LoadHostMap(filePath string) (map[string][]int, error) {
 			return nil, fmt.Errorf("%s is of invalid format", line)
 		}
 		hostname = tokens2[0]
-		m[hostname], err = notation.ConvertCompressedCallListToIntSlice(tokens[1])
+		m[hostname], err = notation.ConvertStringRangesToIntSlice(tokens[1])
 		if err != nil {
 			return nil, err
 		}

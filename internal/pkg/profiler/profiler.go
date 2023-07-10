@@ -1006,7 +1006,7 @@ func (cfg *PostmortemConfig) Analyze() error {
 	if cfg.Steps == "" {
 		cfg.Steps = AllSteps
 	}
-	listSteps, err := notation.ConvertCompressedCallListToIntSlice(cfg.Steps)
+	listSteps, err := notation.ConvertStringRangesToIntSlice(cfg.Steps)
 	if err != nil {
 		return err
 	}
@@ -1189,7 +1189,7 @@ func (cfg *PostmortemConfig) Analyze() error {
 			}
 			t := timer.Start()
 
-			listCalls, err := notation.ConvertCompressedCallListToIntSlice(cfg.CallsToPlot)
+			listCalls, err := notation.ConvertStringRangesToIntSlice(cfg.CallsToPlot)
 			if err != nil {
 				return err
 			}

@@ -165,7 +165,7 @@ func ReadBacktraceFile(codeBaseDir string, path string, m map[int]string) (map[i
 	}
 	line = strings.TrimPrefix(line, callsToken)
 	line = strings.TrimRight(line, "\n")
-	calls, err := notation.ConvertCompressedCallListToIntSlice(line)
+	calls, err := notation.ConvertStringRangesToIntSlice(line)
 	if err != nil {
 		return nil, fmt.Errorf("unable to parse %s: %s", line, err)
 	}

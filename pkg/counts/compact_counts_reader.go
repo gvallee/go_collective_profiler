@@ -28,6 +28,10 @@ const (
 	CompactFormatUnknownContext = iota
 )
 
+func getNumberOfRanksFromCompressedNotation(str string) (int, error) {
+	return notation.GetNumberOfEltsFromCompressedNotation(str)
+}
+
 // AnalyzeCounts analyses the count from a count file
 func AnalyzeCounts(counts []string, msgSizeThreshold int, datatypeSize int) (Stats, map[int][]int, error) {
 	var stats Stats
@@ -59,13 +63,13 @@ func AnalyzeCounts(counts []string, msgSizeThreshold int, datatypeSize int) (Sta
 		tokens := strings.Split(line, ": ")
 		c := tokens[0]
 		c = strings.TrimPrefix(c, RankListPrefix)
-		numberOfRanks, err := notation.GetNumberOfRanksFromCompressedNotation(c)
+		numberOfRanks, err := getNumberOfRanksFromCompressedNotation(c)
 		if err != nil {
-			return stats, nil, fmt.Errorf("notation.GetNumberOfRanksFromCompressedNotation() failed: %w", err)
+			return stats, nil, fmt.Errorf("getNumberOfRanksFromCompressedNotation() failed: %w", err)
 		}
-		ranks, err := notation.ConvertCompressedCallListToIntSlice(c)
+		ranks, err := notation.ConvertStringRangesToIntSlice(c)
 		if err != nil {
-			return stats, nil, fmt.Errorf("notation.ConvertCompressedCallListToIntSlice() failed: %w", err)
+			return stats, nil, fmt.Errorf("notation.ConvertStringRangesToIntSlice() failed: %w", err)
 		}
 
 		zeros = 0
@@ -234,7 +238,7 @@ func GetCompactHeader(reader *bufio.Reader) (HeaderT, error) {
 			//strParsing = strings.ReplaceAll(strParsing, " calls", "")
 
 			if header.CallIDsStr != "" {
-				header.CallIDs, err = notation.ConvertCompressedCallListToIntSlice(header.CallIDsStr)
+				header.CallIDs, err = notation.ConvertStringRangesToIntSlice(header.CallIDsStr)
 				if err != nil {
 					log.Printf("[ERROR] unable to parse calls IDs: %s", err)
 					return header, err
@@ -719,7 +723,7 @@ func compactCountFormatToList(rawCounters []string) ([]string, error) {
 				return nil, fmt.Errorf("line %d is not a valid format for compact counts (%d): %s", line_idx, len(tokens), c)
 			}
 			callIDsStr := strings.TrimPrefix(tokens[0], RankListPrefix)
-			callIDs, err := notation.ConvertCompressedCallListToIntSlice(callIDsStr)
+			callIDs, err := notation.ConvertStringRangesToIntSlice(callIDsStr)
 			if err != nil {
 				return nil, err
 			}

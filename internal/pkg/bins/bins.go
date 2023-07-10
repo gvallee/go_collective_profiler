@@ -102,7 +102,7 @@ func GetFromCounts(counts []string, bins []Data, numCalls int, datatypeSize int)
 		ranks := tokens[0]
 		counts := strings.TrimRight(tokens[1], "\n")
 		ranks = strings.TrimLeft(ranks, "Rank(s) ")
-		listRanks, err := notation.ConvertCompressedCallListToIntSlice(ranks)
+		listRanks, err := notation.ConvertStringRangesToIntSlice(ranks)
 		if err != nil {
 			return bins, err
 		}
