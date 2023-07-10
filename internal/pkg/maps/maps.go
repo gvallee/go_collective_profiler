@@ -19,9 +19,9 @@ import (
 
 	"github.com/gvallee/go_collective_profiler/internal/pkg/format"
 	"github.com/gvallee/go_collective_profiler/internal/pkg/location"
-	"github.com/gvallee/go_collective_profiler/internal/pkg/notation"
 	"github.com/gvallee/go_collective_profiler/internal/pkg/progress"
 	"github.com/gvallee/go_collective_profiler/pkg/counts"
+	"github.com/gvallee/go_notation/pkg/notation"
 	"github.com/gvallee/go_util/pkg/util"
 )
 

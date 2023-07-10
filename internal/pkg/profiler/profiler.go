@@ -27,7 +27,6 @@ import (
 	"github.com/gvallee/go_collective_profiler/internal/pkg/format"
 	"github.com/gvallee/go_collective_profiler/internal/pkg/location"
 	"github.com/gvallee/go_collective_profiler/internal/pkg/maps"
-	"github.com/gvallee/go_collective_profiler/internal/pkg/notation"
 	"github.com/gvallee/go_collective_profiler/internal/pkg/patterns"
 	"github.com/gvallee/go_collective_profiler/internal/pkg/plot"
 	"github.com/gvallee/go_collective_profiler/internal/pkg/plugins"
@@ -37,6 +36,7 @@ import (
 	"github.com/gvallee/go_collective_profiler/pkg/counts"
 	"github.com/gvallee/go_collective_profiler/pkg/errors"
 	"github.com/gvallee/go_collective_profiler/pkg/timings"
+	"github.com/gvallee/go_notation/pkg/notation"
 )
 
 const (
