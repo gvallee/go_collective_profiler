@@ -79,7 +79,7 @@ func GetLocationDataFromStrings(lines []string, readIndex int) (*Data, error) {
 	}
 	callsListStr := strings.TrimRight(lines[readIndex], "\n")
 	callsListStr = strings.TrimPrefix(callsListStr, callsToken)
-	info.Calls, err = notation.ConvertCompressedCallListToIntSlice(callsListStr)
+	info.Calls, err = notation.ConvertStringRangesToIntSlice(callsListStr)
 	if err != nil {
 		return nil, err
 	}
@@ -91,7 +91,7 @@ func GetLocationDataFromStrings(lines []string, readIndex int) (*Data, error) {
 	}
 	commWorldRanksStr := strings.TrimRight(lines[readIndex], "\n")
 	commWorldRanksStr = strings.TrimPrefix(commWorldRanksStr, commWorldRanksToken)
-	commWorldRanks, err := notation.ConvertCompressedCallListToIntSlice(commWorldRanksStr)
+	commWorldRanks, err := notation.ConvertStringRangesToIntSlice(commWorldRanksStr)
 	if err != nil {
 		return nil, err
 	}
@@ -103,7 +103,7 @@ func GetLocationDataFromStrings(lines []string, readIndex int) (*Data, error) {
 	}
 	pidsListStr := strings.TrimRight(lines[readIndex], "\n")
 	pidsListStr = strings.TrimLeft(pidsListStr, pidsToken)
-	pids, err := notation.ConvertCompressedCallListToIntSlice(pidsListStr)
+	pids, err := notation.ConvertStringRangesToIntSlice(pidsListStr)
 	if err != nil {
 		return nil, err
 	}
