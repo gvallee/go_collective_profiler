@@ -20,8 +20,8 @@ import (
 	"strings"
 
 	"github.com/gvallee/go_collective_profiler/internal/pkg/format"
-	"github.com/gvallee/go_collective_profiler/internal/pkg/notation"
 	"github.com/gvallee/go_collective_profiler/internal/pkg/profiler"
+	"github.com/gvallee/go_notation/pkg/notation"
 	"github.com/gvallee/go_util/pkg/util"
 )
 

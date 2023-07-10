@@ -17,9 +17,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/gvallee/go_collective_profiler/internal/pkg/notation"
 	"github.com/gvallee/go_collective_profiler/internal/pkg/progress"
 	"github.com/gvallee/go_collective_profiler/pkg/errors"
+	"github.com/gvallee/go_notation/pkg/notation"
 )
 
 const (
