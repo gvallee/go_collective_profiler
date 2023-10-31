@@ -41,7 +41,7 @@ func main() {
 	plotCalls := flag.String("plot", graphList, "Range of calls for which the tool will generate graphs.\n"+
 		"To specify calls, it is possible to list specific steps through a comma separated list or a rang of steps (e.g., \"1-3\").\n")
 	binThresholds := flag.String("bins", profiler.DefaultBinThreshold, "Comma-separated list of thresholds to use for the creation of bins")
-
+	profilerSrcDirFlag := flag.String("profiler-src", "", "Set the path to the profiler source code")
 	flag.Parse()
 
 	cmdName := filepath.Base(os.Args[0])
@@ -73,6 +73,10 @@ func main() {
 		SizeThreshold:  *sizeThreshold,
 		Steps:          *steps,
 		CallsToPlot:    *plotCalls,
+	}
+
+	if *profilerSrcDirFlag != "" {
+		profilerCfg.ProfilerSrcDir = *profilerSrcDirFlag
 	}
 
 	err := plugins.Load(codeBaseDir, &profilerCfg.Plugins)
