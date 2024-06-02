@@ -717,7 +717,7 @@ func (v *validationCfg) profiler(keepResults bool, fullValidation bool) error {
 
 func main() {
 	verbose := flag.Bool("v", false, "Enable verbose mode")
-	profilerSrcDirFlag := flag.String("profiler-src", "", "Set the path to the profiler source code")
+	profilerSrcDirFlag := flag.String("profiler-src", "", "Set the path to the profiler source code (optional, use only when the repository is not used in the context of the collective_profiler package)")
 	counts := flag.Bool("counts", false, "Validate the count data generated during the validation run of the profiler with an MPI application. Requires the following additional options: -dir, -job, -id.")
 	profilerValidation := flag.Bool("profiler", false, "Perform a validation of the profiler itself running various tests. Requires MPI. Does not require any additional option.")
 	postmortemValidation := flag.Bool("postmortem", false, "Perform a validation of the postmortem analysis tools.")
@@ -946,6 +946,10 @@ func main() {
 			},
 		}
 		validationTests = append(validationTests, extaTests...)
+
+		*profilerValidation = true
+		*postmortemValidation = true
+		*webui = true
 	}
 
 	cmdName := filepath.Base(os.Args[0])
