@@ -8,6 +8,7 @@ package patterns
 
 import (
 	"io/ioutil"
+	"fmt"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -219,16 +220,16 @@ func TestParseFile(t *testing.T) {
 		if err != nil {
 			t.Fatalf("ParseFile() failed: %s", err)
 		}
-		t.Log("Comparing AllPatterns list...")
+		fmt.Println("Comparing AllPatterns list...")
 		compareArrayCallData(t, tt.expectedOutput.AllPatterns, patterns.AllPatterns)
-		t.Log("Comparing OneToN list...")
+		fmt.Println("Comparing OneToN list...")
 		compareArrayCallData(t, tt.expectedOutput.OneToN, patterns.OneToN)
-		t.Log("Comparing NToN list...")
+		fmt.Println("Comparing NToN list...")
 		compareArrayCallData(t, tt.expectedOutput.NToN, patterns.NToN)
-		t.Log("Comparing NToOne list...")
+		fmt.Println("Comparing NToOne list...")
 		compareArrayCallData(t, tt.expectedOutput.NToOne, patterns.NToOne)
-		t.Log("Comparing Empty patterns...")
+		fmt.Println("Comparing Empty patterns...")
 		compareArrayCallData(t, tt.expectedOutput.Empty, patterns.Empty)
-		t.Log("All done for test.")
+		fmt.Println("All done for test.")
 	}
 }
