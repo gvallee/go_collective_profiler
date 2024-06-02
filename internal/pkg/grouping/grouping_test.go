@@ -7,6 +7,7 @@
 package grouping
 
 import (
+	"log"
 	"strings"
 	"testing"
 )
@@ -45,7 +46,7 @@ func TestSplitting(t *testing.T) {
 			}
 		}
 
-		t.Logf("Group ready, splitting at %d", tt.splitIndex)
+		log.Printf("Group ready, splitting at %d", tt.splitIndex)
 		ng, err := e.splitGroup(e.Groups[0], tt.splitIndex, tt.elts)
 		if err != nil {
 			t.Fatalf("unable to split group: %s", err)
@@ -123,9 +124,9 @@ func TestGrouping(t *testing.T) {
 	num := 1
 	for _, tt := range tests {
 		e := Init()
-		t.Logf("Running test %d", num)
+		log.Printf("Running test %d", num)
 		for j := 0; j < len(tt.points); j++ {
-			t.Logf("-> Adding %d\n", tt.points[j])
+			log.Printf("-> Adding %d\n", tt.points[j])
 			err := e.AddDatapoint(j, tt.points)
 			if err != nil {
 				t.Fatalf("unable to add point: %s", err)
@@ -135,7 +136,7 @@ func TestGrouping(t *testing.T) {
 		// Compare the resulting groups with what we expect
 		gps, err := e.GetGroups()
 		if err != nil {
-			t.Logf("unable to get groups: %s", err)
+			t.Fatalf("unable to get groups: %s", err)
 		}
 
 		var groupsStr []string
