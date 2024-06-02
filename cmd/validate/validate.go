@@ -960,7 +960,7 @@ func main() {
 		os.Exit(0)
 	}
 
-	logFile := util.OpenLogFile("alltoallv", cmdName)
+	logFile := util.OpenLogFile("go_collective_profiler", cmdName)
 	defer logFile.Close()
 	if *verbose {
 		nultiWriters := io.MultiWriter(os.Stdout, logFile)
