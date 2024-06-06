@@ -1,7 +1,7 @@
-# Copyright (c) 2020-2021 NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2020-2024 NVIDIA CORPORATION. All rights reserved.
 
 all: webui map profile sendprofiler recvprofiler getcounters validate srcountsanalyzer analyzetimings analyzebacktraces \
-	getcalldata getbins profilerrun bandwidth
+	getcalldata getbins profilerrun bandwidth doc
 
 bandwidth:
 	cd cmd/bandwidth; go build bandwidth.go
@@ -57,6 +57,9 @@ test:
 	cd pkg/counts; go test -v
 
 check: test
+
+doc:
+        cd doc && make
 
 clean:
 	@rm -f cmd/countersextractor/validate
