@@ -59,7 +59,7 @@ test:
 check: test
 
 doc:
-        cd doc && make
+	cd doc && make
 
 clean:
 	@rm -f cmd/countersextractor/validate
