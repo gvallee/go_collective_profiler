@@ -230,9 +230,12 @@ func checkOutput(codeBaseDir string, tempDir string, tt *Test) error {
 	index := 0
 	for _, file := range tt.expectedExecTimeFiles {
 		execTimingFile := filepath.Join(tempDir, file)
-		if !util.FileExists(execTimingFile) {
-			return fmt.Errorf("%s is missing", execTimingFile)
+		jobOutputFileExists, actualOutputFilename := profiler.JobOutputFileExists(tempDir, file)
+		if !jobOutputFileExists {
+			return fmt.Errorf("%s is missing", filepath.Join(tempDir, file))
 		}
+		execTimingFile = actualOutputFilename
+
 		// We also check the format of the content
 		err = checkFormatTimingFile(execTimingFile, codeBaseDir, tt.numCallsPerComm[index], tt.numRanksPerComm[index], tt)
 		if err != nil {
@@ -245,9 +248,12 @@ func checkOutput(codeBaseDir string, tempDir string, tt *Test) error {
 	index = 0
 	for _, file := range tt.expectedLateArrivalFiles {
 		lateArrivalFile := filepath.Join(tempDir, file)
-		if !util.FileExists(lateArrivalFile) {
-			return fmt.Errorf("%s is missing", lateArrivalFile)
+		jobOutputFileExists, actualOutputFilename := profiler.JobOutputFileExists(tempDir, file)
+		if !jobOutputFileExists {
+			return fmt.Errorf("%s is missing", filepath.Join(tempDir, file))
 		}
+		lateArrivalFile = actualOutputFilename
+
 		// We also check the format of the content
 		err = checkFormatTimingFile(lateArrivalFile, codeBaseDir, tt.numCallsPerComm[index], tt.numRanksPerComm[index], tt)
 		if err != nil {

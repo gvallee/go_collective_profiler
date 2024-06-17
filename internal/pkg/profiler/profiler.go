@@ -37,6 +37,7 @@ import (
 	"github.com/gvallee/go_collective_profiler/pkg/errors"
 	"github.com/gvallee/go_collective_profiler/pkg/timings"
 	"github.com/gvallee/go_notation/pkg/notation"
+	"github.com/gvallee/go_util/pkg/util"
 )
 
 const (
@@ -1253,4 +1254,33 @@ func (cfg *PostmortemConfig) Analyze() error {
 	}
 
 	return nil
+}
+
+// JobOutputFileExists checks if an given output file exists. The function abstract
+// the actual details of the file name, for instance if the file name includes the job
+// number. THe function assumes one and only one matching output file can exist. The
+// function return the path to the actual output file.
+func JobOutputFileExists(dir string, refFilename string) (bool, string) {
+	pathRefFile := filepath.Join(dir, refFilename)
+	if util.FileExists(pathRefFile) {
+		return true, pathRefFile
+	}
+
+	// If the actual file does not exists, we check if there is a file named based on a job number
+	if strings.Contains(refFilename, "_job") {
+		files, err := ioutil.ReadDir(dir)
+        if err != nil {
+            log.Printf("[ERROR] canno get content of %s", dir)
+			return false, ""
+        }
+
+		filenamePrefix := refFilename[:strings.Index(refFilename, "_job")]
+	    for _, file := range files {
+            if strings.Contains(file.Name(), filenamePrefix) {
+				return true, filepath.Join(dir, file.Name())
+			}
+        }
+    }
+
+    return false, ""
 }
